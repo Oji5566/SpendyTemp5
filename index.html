@@ -1,0 +1,4207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benji</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#F5F5F7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Benji">
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — Fluent UI 2 iOS
+       ============================================================ */
+    :root {
+      --color-brand:        #0F6CBD;
+      --color-bg-1:         #FFFFFF;
+      --color-bg-2:         #F3F2F1;
+      --color-fg-1:         #242424;
+      --color-fg-2:         #616161;
+      --color-stroke-1:     #E0E0E0;
+      --color-success:      #107C10;
+      --color-error:        #D13438;
+      --color-brand-tint:   #E5F1FB;
+
+      --radius-sm:          4px;
+      --radius-md:          8px;
+      --radius-lg:          12px;
+      --radius-xl:          16px;
+      --radius-circular:    9999px;
+
+      --shadow-2: 0 1px 2px rgba(0,0,0,.14), 0 0 2px rgba(0,0,0,.12);
+      --shadow-4: 0 2px 4px rgba(0,0,0,.14), 0 0 2px rgba(0,0,0,.12);
+      --shadow-8: 0 4px 8px rgba(0,0,0,.14), 0 0 2px rgba(0,0,0,.12);
+
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+      --t-fast:   150ms ease;
+      --t-normal: 250ms ease;
+      --t-slow:   350ms ease;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: var(--font);
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+
+    /* ============================================================
+       APP SHELL — full-screen on mobile, phone frame on desktop
+       ============================================================ */
+    #app-wrapper {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    #app {
+      position: relative;
+      width: 100%; height: 100%;
+      background: var(--color-bg-2);
+      overflow: hidden;
+    }
+
+    @media (min-width: 500px) {
+      #app {
+        width: 430px; height: 844px;
+        border-radius: 50px;
+        box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.1);
+      }
+    }
+
+    /* ============================================================
+       SCREENS
+       ============================================================ */
+    .screen {
+      position: absolute; inset: 0;
+      display: none; flex-direction: column;
+      background: var(--color-bg-2);
+    }
+    .screen.active { display: flex; }
+
+    /* ============================================================
+       AUTH SCREEN
+       ============================================================ */
+    #screen-auth {
+      background: var(--color-bg-1);
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0;
+      overflow-y: auto;
+    }
+
+    .auth-inner {
+      width: 100%;
+      max-width: 380px;
+      padding: 48px 28px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .auth-logo {
+      width: 76px; height: 76px;
+      background: var(--color-brand);
+      border-radius: var(--radius-xl);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-8);
+    }
+    .auth-logo svg { width: 44px; height: 44px; fill: white; }
+
+    .auth-title {
+      font-size: 28px; font-weight: 700;
+      color: var(--color-fg-1); margin-bottom: 6px;
+    }
+    .auth-subtitle {
+      font-size: 15px; color: var(--color-fg-2);
+      margin-bottom: 36px; text-align: center;
+    }
+
+    .auth-form { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+
+    .input-group  { display: flex; flex-direction: column; gap: 4px; }
+    .input-label  { font-size: 13px; font-weight: 600; color: var(--color-fg-2); }
+
+    .input-field {
+      width: 100%; height: 48px;
+      padding: 0 14px;
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-md);
+      font-size: 16px; font-family: var(--font);
+      color: var(--color-fg-1); background: var(--color-bg-1);
+      outline: none;
+      transition: border-color var(--t-fast);
+    }
+    .input-field:focus { border-color: var(--color-brand); }
+
+    .btn-primary {
+      width: 100%; height: 48px;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600; font-family: var(--font);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity var(--t-fast), transform var(--t-fast);
+    }
+    .btn-primary:active { opacity: .85; transform: scale(.98); }
+
+    .auth-toggle {
+      margin-top: 20px;
+      font-size: 14px; color: var(--color-fg-2); text-align: center;
+    }
+    .auth-toggle a { color: var(--color-brand); font-weight: 600; cursor: pointer; }
+
+    .auth-mode-switch {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .auth-mode-btn {
+      min-height: 48px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-stroke-1);
+      background: rgba(255,255,255,.06);
+      color: var(--color-fg-2);
+      font-size: 15px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+    }
+    .auth-mode-btn.active {
+      background: linear-gradient(135deg, var(--color-brand), var(--color-brand-2));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 20px 38px rgba(92,106,255,.24);
+    }
+    .auth-mode-btn:active { transform: scale(.98); }
+
+
+    .error-msg {
+      font-size: 13px; color: var(--color-error);
+      background: #fee7e8; padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    /* ============================================================
+       ONBOARDING SCREEN
+       ============================================================ */
+    #screen-onboarding {
+      background: var(--color-bg-1);
+      overflow: hidden;
+    }
+
+    .progress-dots {
+      display: flex; gap: 6px; justify-content: center;
+      padding: 20px 24px 0;
+    }
+    .progress-dot {
+      width: 8px; height: 8px;
+      border-radius: var(--radius-circular);
+      background: var(--color-stroke-1);
+      transition: background var(--t-normal), width var(--t-normal);
+    }
+    .progress-dot.active { background: var(--color-brand); width: 24px; }
+    .progress-dot.done   { background: var(--color-brand); opacity: .4; }
+
+    .onboarding-body {
+      flex: 1; overflow: hidden;
+      padding: 28px 24px 0;
+      display: flex; flex-direction: column;
+    }
+
+    .onboarding-step { display: none; flex-direction: column; flex: 1; }
+    .onboarding-step.active { display: flex; }
+
+    .step-emoji   { font-size: 52px; margin-bottom: 14px; }
+    .step-title   { font-size: 26px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 8px; line-height: 1.2; }
+    .step-subtitle{ font-size: 15px; color: var(--color-fg-2); margin-bottom: 28px; line-height: 1.55; }
+
+    .step-content { flex: 1; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+
+    /* Radio options */
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .radio-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: border-color var(--t-fast), background var(--t-fast);
+    }
+    .radio-option.selected { border-color: var(--color-brand); background: var(--color-brand-tint); }
+    .radio-option input[type="radio"] { display: none; }
+    .radio-dot {
+      width: 20px; height: 20px;
+      border-radius: var(--radius-circular);
+      border: 2px solid var(--color-stroke-1);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: border-color var(--t-fast);
+    }
+    .radio-option.selected .radio-dot { border-color: var(--color-brand); }
+    .radio-dot::after {
+      content: ''; width: 10px; height: 10px;
+      border-radius: var(--radius-circular);
+      background: var(--color-brand);
+      opacity: 0; transition: opacity var(--t-fast);
+    }
+    .radio-option.selected .radio-dot::after { opacity: 1; }
+    .radio-label { font-size: 15px; font-weight: 600; color: var(--color-fg-1); }
+    .radio-desc  { font-size: 13px; color: var(--color-fg-2); margin-top: 1px; }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px;
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-lg);
+    }
+    .toggle-label { font-size: 15px; font-weight: 600; color: var(--color-fg-1); }
+
+    .toggle {
+      width: 50px; height: 28px;
+      background: var(--color-stroke-1);
+      border-radius: var(--radius-circular);
+      position: relative;
+      cursor: pointer; border: none; outline: none; flex-shrink: 0;
+      transition: background var(--t-normal);
+    }
+    .toggle.on { background: var(--color-brand); }
+    .toggle::after {
+      content: '';
+      position: absolute; top: 3px; left: 3px;
+      width: 22px; height: 22px;
+      background: white;
+      border-radius: var(--radius-circular);
+      box-shadow: var(--shadow-2);
+      transition: transform var(--t-normal);
+    }
+    .toggle.on::after { transform: translateX(22px); }
+
+    /* Rate highlight card */
+    .result-highlight {
+      background: var(--color-brand-tint);
+      border: 1.5px solid var(--color-brand);
+      border-radius: var(--radius-xl);
+      padding: 24px; text-align: center;
+    }
+    .result-highlight .rate { font-size: 42px; font-weight: 800; color: var(--color-brand); }
+    .result-highlight .rate-label { font-size: 15px; color: var(--color-fg-2); margin-top: 4px; }
+
+    .onboarding-footer { padding: 16px 24px 36px; display: flex; flex-direction: column; gap: 8px; }
+
+    .btn-back {
+      background: none; border: none;
+      color: var(--color-brand); font-size: 15px; font-family: var(--font);
+      cursor: pointer; padding: 4px 0; text-align: left;
+    }
+
+    /* ============================================================
+       APP SCREEN — tab layout
+       ============================================================ */
+    #screen-app { display: none; }
+    #screen-app.active { display: flex; }
+
+    /* Tab bar */
+    .tab-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 80px;
+      background: var(--color-bg-1);
+      border-top: 1px solid var(--color-stroke-1);
+      display: flex; align-items: stretch;
+      z-index: 100;
+    }
+    .tab-btn {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3px;
+      background: none; border: none;
+      cursor: pointer;
+      padding: 8px 0 18px;
+      color: var(--color-fg-2);
+      font-size: 11px; font-family: var(--font); font-weight: 500;
+      transition: color var(--t-fast);
+    }
+    .tab-btn.active { color: var(--color-brand); }
+    .tab-btn svg { width: 24px; height: 24px; }
+
+    /* Tab content panes */
+    .tab-content {
+      display: none; flex-direction: column;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 80px;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .tab-content.active { display: flex; }
+
+    /* ============================================================
+       CALCULATOR TAB
+       ============================================================ */
+    #tab-calculator {
+      padding: 16px; gap: 12px;
+      overflow: hidden; /* keypad fills space, no scroll */
+    }
+
+    /* Dollar bill */
+    .dollar-bill {
+      background: #1b5e20;
+      border-radius: var(--radius-xl);
+      padding: 18px 20px;
+      position: relative; overflow: hidden;
+      flex-shrink: 0;
+      min-height: 130px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      box-shadow: var(--shadow-8), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    /* Dashed inner border */
+    .dollar-bill::before {
+      content: '';
+      position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+      border: 1.5px dashed rgba(255,255,255,.22);
+      border-radius: var(--radius-lg);
+      pointer-events: none;
+    }
+    /* Watermark */
+    .dollar-bill::after {
+      content: 'BENJI';
+      position: absolute;
+      font-size: 44px; font-weight: 900;
+      color: rgba(255,255,255,.04);
+      letter-spacing: 6px;
+      pointer-events: none; user-select: none;
+    }
+    /* Decorative circles */
+    .bill-circle {
+      position: absolute;
+      width: 76px; height: 76px;
+      border-radius: var(--radius-circular);
+      border: 1.5px dashed rgba(255,255,255,.18);
+    }
+    .bill-circle-left  { left: -38px; top: 50%; transform: translateY(-50%); }
+    .bill-circle-right { right: -38px; top: 50%; transform: translateY(-50%); }
+
+    .bill-amount {
+      font-size: 50px; font-weight: 800; color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,.3);
+      line-height: 1; position: relative; z-index: 1;
+      transition: transform 200ms ease;
+    }
+    .bill-amount.pulse { animation: billPulse 280ms cubic-bezier(.34,1.56,.64,1); }
+    @keyframes billPulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .bill-minutes {
+      font-size: 13px; color: rgba(255,255,255,.72);
+      margin-top: 6px; position: relative; z-index: 1;
+    }
+
+    /* Keypad */
+    .keypad-container {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .keypad-grid {
+      flex: 1; min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .key-btn {
+      background: var(--color-bg-1);
+      border: none; border-radius: var(--radius-lg);
+      font-size: 22px; font-weight: 500; font-family: var(--font);
+      color: var(--color-fg-1);
+      cursor: pointer;
+      box-shadow: var(--shadow-2);
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+      min-height: 48px;
+    }
+    .key-btn:active { background: var(--color-bg-2); transform: scale(.93); box-shadow: none; }
+    .key-btn.key-delete { font-size: 18px; color: var(--color-fg-2); }
+
+    .enter-btn {
+      height: 50px; flex-shrink: 0;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-lg);
+      font-size: 17px; font-weight: 700; font-family: var(--font);
+      cursor: pointer;
+      box-shadow: var(--shadow-4);
+      transition: opacity var(--t-fast), transform var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .enter-btn:active { opacity: .86; transform: scale(.98); }
+
+    /* ============================================================
+       RESULT BOTTOM SHEET
+       ============================================================ */
+    .overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--t-normal);
+    }
+    .overlay.visible { opacity: 1; pointer-events: all; }
+
+    .bottom-sheet {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: var(--color-bg-1);
+      border-radius: 20px 20px 0 0;
+      padding: 0 20px 36px;
+      z-index: 201;
+      transform: translateY(100%);
+      transition: transform var(--t-normal);
+      box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+      max-height: 90%;
+      overflow-y: auto;
+    }
+    .bottom-sheet.open { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--color-stroke-1);
+      border-radius: var(--radius-circular);
+      margin: 12px auto 18px;
+    }
+
+    .sheet-result { text-align: left; margin-bottom: 20px; }
+    .sheet-time   { font-size: 20px; font-weight: 700; color: var(--color-brand); }
+    .sheet-amount-block { margin-top: 18px; }
+    .sheet-amount { font-size: 34px; font-weight: 800; color: var(--color-fg-1); margin-top: 8px; display: block; }
+    .sheet-equals { font-size: 16px; color: var(--color-fg-2); margin: 4px 0; }
+
+    /* Action buttons */
+    .action-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 0; }
+    .action-btn {
+      flex: 1; height: 56px;
+      border: none; border-radius: var(--radius-lg);
+      font-size: 13px; font-weight: 700; font-family: var(--font);
+      cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      transition: opacity var(--t-fast), transform var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .action-btn:active  { opacity: .85; transform: scale(.95); }
+    .action-btn .btn-em { font-size: 20px; }
+    .action-btn.buy-btn    { background: #e8f5e9; color: var(--color-success); }
+    .action-btn.watchlist-btn { background: rgba(255,214,10,.16); color: #b88600; }
+    .action-btn.giveup-btn { background: #fdeeee; color: var(--color-error); }
+    .action-btn.notrack-btn{ background: var(--color-bg-2); color: var(--color-fg-2); }
+    .action-secondary-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .action-btn-compact {
+      width: calc((100% - 16px) / 3);
+      min-height: 48px;
+      font-size: 12px;
+    }
+
+    /* Entry form inside sheet */
+    .sheet-form { display: none; flex-direction: column; gap: 12px; margin-top: 8px; }
+    .sheet-form.visible { display: flex; }
+
+    .categories-scroll {
+      display: flex; gap: 8px;
+      overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .categories-scroll::-webkit-scrollbar { display: none; }
+
+    .category-pill {
+      padding: 8px 16px;
+      background: var(--color-bg-2);
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-circular);
+      font-size: 14px; white-space: nowrap;
+      cursor: pointer; font-family: var(--font); color: var(--color-fg-1);
+      transition: background var(--t-fast), border-color var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .category-pill.selected {
+      background: var(--color-brand-tint);
+      border-color: var(--color-brand);
+      color: var(--color-brand); font-weight: 600;
+    }
+
+    .sheet-save-row { display: flex; gap: 8px; }
+    .btn-save {
+      flex: 2; height: 48px;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600; font-family: var(--font);
+      cursor: pointer;
+    }
+    .btn-cancel {
+      flex: 1; height: 48px;
+      background: var(--color-bg-2); color: var(--color-fg-2);
+      border: none; border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600; font-family: var(--font);
+      cursor: pointer;
+    }
+
+    /* ============================================================
+       SUCCESS OVERLAY
+       ============================================================ */
+    .success-overlay {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.96);
+      z-index: 300;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--t-normal);
+    }
+    .success-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .success-circle {
+      width: 80px; height: 80px;
+      border-radius: var(--radius-circular);
+      background: var(--color-success);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .success-circle svg { width: 48px; height: 48px; }
+
+    .checkmark-path {
+      stroke-dasharray: 52;
+      stroke-dashoffset: 52;
+      animation: drawCheck 500ms ease forwards 100ms;
+    }
+    @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+    .success-text { font-size: 24px; font-weight: 700; color: var(--color-fg-1); }
+
+    /* ============================================================
+       HISTORY TAB
+       ============================================================ */
+    #tab-history { background: var(--color-bg-2); }
+
+    .history-header {
+      background: var(--color-bg-1);
+      padding: 16px;
+      border-bottom: 1px solid var(--color-stroke-1);
+      position: sticky; top: 0; z-index: 10;
+      flex-shrink: 0;
+    }
+    .history-title { font-size: 20px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 12px; }
+
+    /* Segmented control */
+    .segmented-control {
+      display: flex;
+      background: var(--color-bg-2);
+      border-radius: var(--radius-md);
+      padding: 2px;
+    }
+    .seg-btn {
+      flex: 1; height: 32px;
+      background: none; border: none;
+      border-radius: var(--radius-sm);
+      font-size: 12px; font-weight: 600; font-family: var(--font);
+      color: var(--color-fg-2);
+      cursor: pointer;
+      transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .seg-btn.active { background: var(--color-bg-1); color: var(--color-fg-1); box-shadow: var(--shadow-2); }
+
+    .history-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .stat-card {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      box-shadow: var(--shadow-2);
+    }
+    .stat-label {
+      font-size: 11px; font-weight: 700; color: var(--color-fg-2);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px;
+    }
+    .stat-value { font-size: 22px; font-weight: 800; color: var(--color-fg-1); line-height: 1; }
+    .stat-sub   { font-size: 12px; color: var(--color-fg-2); margin-top: 3px; }
+
+    .ratio-card {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      padding: 14px; box-shadow: var(--shadow-2);
+      grid-column: 1 / -1;
+    }
+    .ratio-bar {
+      height: 8px; border-radius: var(--radius-circular);
+      overflow: hidden; background: var(--color-bg-2);
+      display: flex; margin: 8px 0;
+    }
+    .ratio-bar-buy  { background: var(--color-success); transition: width var(--t-slow); }
+    .ratio-bar-give { background: var(--color-error);   transition: width var(--t-slow); }
+    .ratio-labels { display: flex; justify-content: space-between; font-size: 12px; }
+    .ratio-buy-label  { color: var(--color-success); font-weight: 700; }
+    .ratio-give-label { color: var(--color-error);   font-weight: 700; }
+
+    /* Transaction list */
+    .date-group { display: flex; flex-direction: column; gap: 8px; }
+    .date-group-label {
+      font-size: 12px; font-weight: 700; color: var(--color-fg-2);
+      text-transform: uppercase; letter-spacing: .5px; padding: 0 4px;
+    }
+    .entry-card {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: var(--shadow-2);
+    }
+    .entry-emoji {
+      font-size: 22px; width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--color-bg-2);
+      border-radius: var(--radius-md); flex-shrink: 0;
+    }
+    .entry-info   { flex: 1; min-width: 0; }
+    .entry-name   { font-size: 15px; font-weight: 600; color: var(--color-fg-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entry-time   { font-size: 12px; color: var(--color-fg-2); margin-top: 2px; }
+    .entry-right  { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .entry-amount { font-size: 15px; font-weight: 700; color: var(--color-fg-1); }
+    .entry-work   { font-size: 11px; color: var(--color-fg-2); }
+    .entry-badge  { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-circular); }
+    .entry-badge.buy     { background: #e8f5e9; color: var(--color-success); }
+    .entry-badge.skip { background: #fdeeee; color: var(--color-error); }
+
+    .entry-badge.skip    { background: #fdeeee; color: var(--color-error); }
+    .entry-badge.watchlist { background: rgba(255,214,10,.16); color: #F6D76A; }
+    .entry-card.interactive { cursor: pointer; }
+    .entry-card.watchlist-card {
+      background: rgba(255,214,10,.10);
+      border: 1px solid rgba(255,214,10,.20);
+    }
+
+    #tab-watchlist { background: var(--color-bg-2); }
+    .watchlist-header {
+      background: var(--color-bg-1);
+      padding: 16px;
+      border-bottom: 1px solid var(--color-stroke-1);
+      position: sticky; top: 0; z-index: 10;
+      flex-shrink: 0;
+    }
+    .watchlist-title { font-size: 20px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 0; }
+    .watchlist-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+    .category-row-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-cat-action {
+      min-width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.05);
+      color: var(--color-fg-1);
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      padding: 0 8px;
+    }
+    .btn-cat-action:disabled {
+      opacity: .35;
+      cursor: default;
+    }
+
+    .modal-form-select {
+      width: 100%;
+      min-height: 56px;
+      padding: 0 14px;
+      border-radius: 20px;
+      border: 1px solid var(--color-stroke-1);
+      background: var(--surface-elevated);
+      color: #fff;
+      font-size: 15px;
+      font-family: var(--font);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .modal-textarea {
+      width: 100%;
+      min-height: 104px;
+      padding: 14px;
+      resize: vertical;
+      border-radius: 20px;
+      border: 1px solid var(--color-stroke-1);
+      background: var(--surface-elevated);
+      color: #fff;
+      font-size: 15px;
+      font-family: var(--font);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .modal-textarea:focus {
+      border-color: rgba(124,134,255,.65);
+      box-shadow: 0 0 0 4px rgba(124,134,255,.14), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .detail-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .detail-meta {
+      font-size: 12px;
+      color: var(--color-fg-2);
+      line-height: 1.5;
+    }
+    .detail-action-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .detail-action-btn {
+      min-height: 48px;
+      border: none;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+    }
+    .detail-action-btn.buy-btn { background: rgba(53,214,138,.14); color: #96F0BF; }
+    .detail-action-btn.skip-btn { background: rgba(255,123,139,.14); color: #FFD0D6; }
+    .detail-action-btn.forget-btn { background: rgba(255,214,10,.14); color: #F6D76A; }
+
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 52px 24px; color: var(--color-fg-2); }
+    .empty-state-icon  { font-size: 48px; margin-bottom: 12px; }
+    .empty-state-title { font-size: 18px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 8px; }
+    .empty-state-text  { font-size: 14px; line-height: 1.55; }
+
+    /* ============================================================
+       SETTINGS TAB
+       ============================================================ */
+    #tab-settings { background: var(--color-bg-2); }
+
+    .settings-header {
+      background: var(--color-bg-1);
+      padding: 16px;
+      border-bottom: 1px solid var(--color-stroke-1);
+      position: sticky; top: 0; z-index: 10;
+      flex-shrink: 0;
+    }
+    .settings-title { font-size: 20px; font-weight: 700; color: var(--color-fg-1); }
+
+    .settings-body { padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+
+    .settings-section { display: flex; flex-direction: column; gap: 6px; }
+    .settings-section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-fg-2);
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 0 4px;
+    }
+    .settings-group {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-2);
+    }
+    .settings-row {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-stroke-1);
+      gap: 12px; min-height: 52px;
+    }
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-row-label { font-size: 15px; color: var(--color-fg-1); flex: 1; }
+    .settings-row-value { font-size: 14px; color: var(--color-fg-2); }
+
+    .settings-row-input {
+      flex: 1; border: none; outline: none;
+      font-size: 15px; font-family: var(--font);
+      color: var(--color-fg-1); text-align: right;
+      background: transparent; max-width: 140px;
+    }
+    .settings-select {
+      border: none; outline: none;
+      font-size: 14px; font-family: var(--font);
+      color: var(--color-brand); background: transparent;
+      cursor: pointer;
+    }
+
+    .btn-logout      { background: none; border: none; color: var(--color-error); font-size: 15px; font-family: var(--font); cursor: pointer; }
+    .btn-link        { background: none; border: none; color: var(--color-brand); font-size: 15px; font-family: var(--font); cursor: pointer; }
+    .btn-danger-link { background: none; border: none; color: var(--color-error); font-size: 15px; font-family: var(--font); cursor: pointer; }
+
+    .rate-display {
+      font-size: 13px; color: var(--color-brand); font-weight: 700;
+      padding: 10px 16px;
+      background: var(--color-brand-tint);
+      border-top: 1px solid var(--color-stroke-1);
+    }
+
+    /* Category rows in settings */
+    .category-row {
+      display: flex; align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-stroke-1); gap: 8px;
+    }
+    .category-row:last-child { border-bottom: none; }
+    .category-row-name { flex: 1; font-size: 15px; color: var(--color-fg-1); }
+    .btn-delete-cat {
+      background: none; border: none;
+      color: var(--color-error); font-size: 20px;
+      cursor: pointer; padding: 2px 4px; line-height: 1;
+      opacity: 0; pointer-events: none;
+    }
+    .category-row.custom .btn-delete-cat { opacity: 1; pointer-events: all; }
+
+    /* ============================================================
+       MODAL
+       ============================================================ */
+    .modal-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 400;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--t-normal);
+    }
+    .modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-xl);
+      padding: 24px; width: 100%; max-width: 340px;
+      box-shadow: var(--shadow-8);
+      transform: scale(.92);
+      transition: transform var(--t-normal);
+    }
+    .modal-overlay.visible .modal { transform: scale(1); }
+
+    .modal-title   { font-size: 18px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 14px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+
+    .confirm-text { font-size: 14px; color: var(--color-fg-2); line-height: 1.55; }
+
+    .btn-modal-cancel {
+      flex: 1; height: 44px;
+      background: var(--color-bg-2); color: var(--color-fg-1);
+      border: none; border-radius: var(--radius-md);
+      font-size: 15px; font-weight: 600; font-family: var(--font); cursor: pointer;
+    }
+    .btn-modal-danger {
+      flex: 1; height: 44px;
+      background: var(--color-error); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 15px; font-weight: 600; font-family: var(--font); cursor: pointer;
+    }
+    .btn-modal-primary {
+      flex: 2; height: 44px;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 15px; font-weight: 600; font-family: var(--font); cursor: pointer;
+    }
+
+    /* ============================================================
+       SCROLLBAR STYLING
+       ============================================================ */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-stroke-1); border-radius: 2px; }
+  </style>
+
+  <style id="spendy-modern-overrides">
+    :root {
+      --color-brand: #7C86FF;
+      --color-brand-2: #4BD4FF;
+      --color-brand-tint: rgba(124, 134, 255, 0.18);
+      --color-bg-1: #0E1525;
+      --color-bg-2: #0A1120;
+      --color-fg-1: #F5F8FF;
+      --color-fg-2: rgba(232, 239, 255, 0.72);
+      --color-fg-3: rgba(232, 239, 255, 0.5);
+      --color-stroke-1: rgba(255, 255, 255, 0.08);
+      --color-success: #35D68A;
+      --color-error: #FF7B8B;
+      --surface-card: rgba(15, 23, 42, 0.7);
+      --surface-elevated: rgba(20, 30, 52, 0.84);
+      --shadow-soft: 0 20px 45px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --radius-xl: 30px;
+    }
+
+    html, body {
+      background:
+        radial-gradient(circle at 20% 0%, rgba(124,134,255,.26), transparent 28%),
+        radial-gradient(circle at 85% 10%, rgba(75,212,255,.16), transparent 24%),
+        linear-gradient(180deg, #09101C 0%, #0B1324 100%);
+      color: var(--color-fg-1);
+    }
+
+    body::before,
+    body::after,
+    #app::before,
+    #app::after {
+      content: '';
+      position: absolute;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(48px);
+      opacity: .55;
+      z-index: 0;
+    }
+
+    body::before {
+      width: 220px; height: 220px;
+      top: -60px; left: -60px;
+      background: rgba(124,134,255,.22);
+    }
+
+    body::after {
+      width: 200px; height: 200px;
+      right: -60px; top: 18%;
+      background: rgba(75,212,255,.16);
+    }
+
+    #app {
+      background:
+        radial-gradient(circle at top left, rgba(124,134,255,.14), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(75,212,255,.10), transparent 26%),
+        linear-gradient(180deg, rgba(9,15,27,.98), rgba(11,18,31,.98));
+      isolation: isolate;
+    }
+
+    #app::before {
+      width: 180px; height: 180px;
+      top: 80px; right: -40px;
+      background: rgba(124,134,255,.15);
+    }
+
+    #app::after {
+      width: 160px; height: 160px;
+      bottom: 140px; left: -30px;
+      background: rgba(75,212,255,.10);
+    }
+
+    @media (min-width: 500px) {
+      #app {
+        border-radius: 48px;
+        border: 1px solid rgba(255,255,255,.08);
+        box-shadow: 0 30px 80px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.05);
+      }
+    }
+
+    .screen,
+    #screen-auth,
+    #screen-onboarding,
+    #screen-app,
+    #tab-history,
+    #tab-settings {
+      background: transparent;
+      color: var(--color-fg-1);
+    }
+
+    .auth-inner {
+      max-width: 390px;
+      min-height: 100%;
+      justify-content: center;
+      padding: 56px 28px 40px;
+    }
+
+    .auth-logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 22px;
+      margin-bottom: 24px;
+      background: linear-gradient(145deg, rgba(124,134,255,.95), rgba(75,212,255,.92));
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 20px 40px rgba(86,108,255,.3);
+    }
+
+    .auth-title {
+      font-size: 34px;
+      letter-spacing: -.04em;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .auth-subtitle {
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--color-fg-2);
+      max-width: 290px;
+      margin-bottom: 34px;
+    }
+
+    .auth-form {
+      gap: 14px;
+    }
+
+    .input-group {
+      gap: 8px;
+    }
+
+    .input-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--color-fg-3);
+    }
+
+    .input-field,
+    .settings-row-input,
+    .settings-select {
+      min-height: 56px;
+      border-radius: 20px;
+      border: 1px solid var(--color-stroke-1);
+      background: var(--surface-elevated);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .input-field::placeholder,
+    .settings-row-input::placeholder {
+      color: rgba(232,239,255,.38);
+    }
+
+    .input-field:focus,
+    .settings-row-input:focus,
+    .settings-select:focus {
+      border-color: rgba(124,134,255,.65);
+      box-shadow:
+        0 0 0 4px rgba(124,134,255,.14),
+        inset 0 1px 0 rgba(255,255,255,.08);
+    }
+
+    .btn-primary,
+    .btn-save,
+    .btn-cancel,
+    .btn-modal-primary,
+    .btn-modal-cancel,
+    .btn-modal-danger {
+      min-height: 56px;
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .btn-primary,
+    .btn-save,
+    .btn-modal-primary {
+      background: linear-gradient(135deg, var(--color-brand), var(--color-brand-2));
+      color: #fff;
+      box-shadow: 0 20px 38px rgba(92,106,255,.24);
+    }
+
+    .btn-cancel,
+    .btn-modal-cancel {
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .btn-modal-danger {
+      background: linear-gradient(135deg, #FF7B8B, #FF5E73);
+      color: #fff;
+      box-shadow: 0 18px 34px rgba(255,94,115,.2);
+    }
+
+    .auth-toggle {
+      color: var(--color-fg-2);
+      margin-top: 24px;
+    }
+
+    .auth-toggle a,
+    .btn-link,
+    .btn-logout,
+    .btn-danger-link {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .error-msg {
+      background: rgba(255,123,139,.12);
+      border: 1px solid rgba(255,123,139,.24);
+      color: #ffd6db;
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .progress-dots {
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 24px 24px 0;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      background: rgba(255,255,255,.16);
+    }
+
+    .progress-dot.active {
+      width: 34px;
+      background: linear-gradient(135deg, var(--color-brand), var(--color-brand-2));
+    }
+
+    .progress-dot.done {
+      background: rgba(124,134,255,.32);
+      opacity: 1;
+    }
+
+    .onboarding-body {
+      padding: 24px 24px 0;
+    }
+
+    .onboarding-step {
+      padding-bottom: 12px;
+    }
+
+    .step-emoji {
+      font-size: 56px;
+      margin-bottom: 18px;
+    }
+
+    .step-title {
+      font-size: 34px;
+      line-height: 1.04;
+      letter-spacing: -.045em;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .step-subtitle {
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--color-fg-2);
+      margin-bottom: 26px;
+      max-width: 320px;
+    }
+
+    .step-content {
+      gap: 16px;
+    }
+
+    .radio-option,
+    .toggle-row,
+    .stat-card,
+    .ratio-card,
+    .entry-card,
+    .settings-group,
+    .modal,
+    .result-highlight {
+      background: var(--surface-card);
+      border: 1px solid var(--color-stroke-1);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .radio-option,
+    .toggle-row {
+      padding: 16px 18px;
+      border-radius: 22px;
+    }
+
+    .radio-option.selected {
+      background: linear-gradient(180deg, rgba(124,134,255,.18), rgba(75,212,255,.12));
+      border-color: rgba(124,134,255,.45);
+    }
+
+    .radio-dot {
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .radio-option.selected .radio-dot {
+      border-color: rgba(124,134,255,.75);
+    }
+
+    .radio-label,
+    .toggle-label {
+      color: #fff;
+    }
+
+    .radio-desc,
+    .toggle-row div[style],
+    .rate-label {
+      color: var(--color-fg-2) !important;
+    }
+
+    .toggle {
+      background: rgba(255,255,255,.12);
+    }
+
+    .toggle.on {
+      background: linear-gradient(135deg, var(--color-brand), var(--color-brand-2));
+    }
+
+    .result-highlight {
+      padding: 28px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top right, rgba(75,212,255,.16), transparent 28%),
+        linear-gradient(145deg, rgba(124,134,255,.26), rgba(15,23,42,.86));
+      border-color: rgba(124,134,255,.26);
+    }
+
+    .result-highlight .rate {
+      color: #fff;
+      letter-spacing: -.05em;
+      text-shadow: 0 8px 30px rgba(75,212,255,.18);
+    }
+
+    .onboarding-footer {
+      padding: 18px 24px 34px;
+      gap: 12px;
+    }
+
+    .btn-back {
+      width: 100%;
+      min-height: 54px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 18px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .tab-content {
+      bottom: 102px;
+      padding-bottom: 10px;
+    }
+
+    .tab-bar {
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      height: 80px;
+      border-radius: 28px;
+      background: rgba(8,14,24,.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 24px 50px rgba(0,0,0,.36);
+    }
+
+    .tab-btn {
+      margin: 10px 6px 12px;
+      border-radius: 22px;
+      padding: 8px 0 10px;
+      color: var(--color-fg-3);
+      gap: 4px;
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: linear-gradient(180deg, rgba(124,134,255,.26), rgba(75,212,255,.14));
+    }
+
+    .tab-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    #tab-calculator {
+      padding: 0 20px 0;
+      gap: 14px;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .calculator-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      z-index: 1;
+      flex: 0 0 auto;
+      padding: 28px 0 16px;
+    }
+
+    .surface-kicker {
+      display: inline-flex;
+      align-self: flex-start;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--color-fg-2);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .calculator-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 14px;
+    }
+
+    .calculator-title {
+      font-size: 34px;
+      line-height: 1;
+      letter-spacing: -.045em;
+      color: #fff;
+      margin-bottom: 0;
+      font-weight: 700;
+    }
+
+    .calculator-rate-chip {
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .dollar-bill {
+      height: 196px;
+      min-height: 196px;
+      max-height: 196px;
+      padding: 20px;
+      border-radius: 30px;
+      align-items: flex-start;
+      justify-content: flex-end;
+      gap: 10px;
+      background:
+        radial-gradient(circle at top right, rgba(75,212,255,.16), transparent 26%),
+        radial-gradient(circle at bottom left, rgba(124,134,255,.18), transparent 24%),
+        linear-gradient(145deg, rgba(14,22,38,.82), rgba(21,34,60,.94));
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 28px 56px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+
+    .dollar-bill::before {
+      top: 10px;
+      right: 10px;
+      bottom: 10px;
+      left: 10px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .dollar-bill::after,
+    .bill-circle {
+      display: none;
+      content: none;
+    }
+
+    .bill-label {
+      position: relative;
+      z-index: 1;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--color-fg-3);
+    }
+
+    .bill-amount {
+      font-size: 44px;
+      line-height: .94;
+      letter-spacing: -.05em;
+      color: #fff;
+      text-shadow: none;
+    }
+
+    .bill-divider {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.02));
+      margin: 6px 0 4px;
+    }
+
+    .bill-minutes {
+      position: relative;
+      z-index: 1;
+      margin-top: 0;
+      font-size: clamp(32px, 7vw, 48px);
+      font-weight: 900;
+      line-height: .95;
+      letter-spacing: -.06em;
+      color: #fff;
+      text-wrap: balance;
+    }
+
+    .bill-caption {
+      position: relative;
+      z-index: 1;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--color-fg-2);
+      max-width: 260px;
+      min-height: 0;
+    }
+
+    .keypad-container {
+      flex: 1 1 auto;
+      min-height: 0;
+      gap: 12px;
+    }
+
+    .keypad-shell {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 30px;
+      background: rgba(10,16,28,.58);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .keypad-grid {
+      gap: 12px;
+    }
+
+    .key-btn {
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 24px;
+      color: #fff;
+      font-size: 28px;
+      font-weight: 600;
+      box-shadow: none;
+    }
+
+    .key-btn:active {
+      background: rgba(255,255,255,.12);
+      transform: scale(.97);
+      box-shadow: none;
+    }
+
+    .key-btn.key-delete {
+      font-size: 20px;
+      color: var(--color-fg-2);
+    }
+
+    .enter-btn {
+      min-height: 60px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--color-brand), var(--color-brand-2));
+      color: #fff;
+      font-size: 18px;
+      box-shadow: 0 18px 34px rgba(92,106,255,.24);
+    }
+
+    .overlay {
+      background: rgba(3,7,14,.56);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .bottom-sheet {
+      background: linear-gradient(180deg, rgba(12,18,31,.98), rgba(8,13,24,.98));
+      border: 1px solid rgba(255,255,255,.08);
+      border-bottom: none;
+      border-radius: 30px 30px 0 0;
+      padding: 0 20px calc(24px + env(safe-area-inset-bottom));
+      box-shadow: 0 -22px 60px rgba(0,0,0,.45);
+    }
+
+    .sheet-handle {
+      width: 44px;
+      height: 5px;
+      margin: 14px auto 22px;
+      background: rgba(255,255,255,.14);
+    }
+
+    .sheet-result {
+      margin-bottom: 20px;
+      padding: 20px;
+      text-align: left;
+      border-radius: 24px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .sheet-amount-block {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sheet-overline {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--color-fg-3);
+      margin-bottom: 12px;
+    }
+
+    .sheet-time {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: .94;
+      letter-spacing: -.06em;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .sheet-amount {
+      display: block;
+      min-height: 0;
+      padding: 0;
+      border-radius: 0;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .sheet-equals {
+      display: none;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--color-fg-2);
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    .action-btn {
+      min-height: 90px;
+      height: auto;
+      padding: 14px 10px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.05);
+      color: #fff;
+    }
+
+    .action-btn.buy-btn {
+      background: rgba(53,214,138,.12);
+      color: #96F0BF;
+    }
+
+    .action-btn.watchlist-btn {
+      background: rgba(255,214,10,.12);
+      color: #F6D76A;
+    }
+
+    .action-btn.giveup-btn {
+      background: rgba(255,123,139,.12);
+      color: #FFD0D6;
+    }
+
+    .action-btn.notrack-btn {
+      background: rgba(255,255,255,.04);
+      color: var(--color-fg-2);
+    }
+
+    .action-secondary-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .action-btn-compact {
+      width: calc((100% - 20px) / 3);
+      min-height: 48px;
+      padding: 0 12px;
+    }
+
+    .sheet-form {
+      margin-top: 16px;
+    }
+
+    .categories-scroll {
+      gap: 10px;
+      padding-bottom: 6px;
+    }
+
+    .category-pill {
+      padding: 10px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      color: #fff;
+    }
+
+    .category-pill.selected {
+      background: linear-gradient(135deg, rgba(124,134,255,.24), rgba(75,212,255,.18));
+      color: #fff;
+      border-color: rgba(124,134,255,.42);
+    }
+
+    .sheet-save-row {
+      gap: 10px;
+    }
+
+    .success-overlay {
+      background: rgba(6,11,19,.74);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .success-circle {
+      background: linear-gradient(135deg, #35D68A, #1FC773);
+      box-shadow: 0 20px 40px rgba(31,199,115,.22);
+    }
+
+    .success-text {
+      color: #fff;
+    }
+
+    .history-header,
+    .watchlist-header,
+    .settings-header {
+      background: linear-gradient(180deg, rgba(9,15,27,.96), rgba(9,15,27,.72));
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 28px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .history-title,
+    .watchlist-title,
+    .settings-title {
+      font-size: 34px;
+      letter-spacing: -.045em;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    .segmented-control {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 4px;
+    }
+
+    .seg-btn {
+      height: 38px;
+      border-radius: 14px;
+      color: var(--color-fg-2);
+    }
+
+    .seg-btn.active {
+      background: linear-gradient(180deg, rgba(124,134,255,.26), rgba(75,212,255,.14));
+      color: #fff;
+      box-shadow: none;
+    }
+
+    .history-body,
+    .watchlist-body,
+    .settings-body {
+      padding: 20px;
+      gap: 18px;
+    }
+
+    .stats-grid {
+      gap: 12px;
+    }
+
+    .stat-card,
+    .ratio-card {
+      padding: 18px;
+      border-radius: 24px;
+    }
+
+    .stat-label,
+    .settings-section-label,
+    .date-group-label {
+      color: var(--color-fg-3);
+    }
+
+    .stat-value,
+    .settings-row-label,
+    .entry-name,
+    .category-row-name,
+    .empty-state-title,
+    .modal-title {
+      color: #fff;
+    }
+
+    .stat-sub,
+    .entry-time,
+    .entry-work,
+    .settings-row-value,
+    .confirm-text,
+    .empty-state-text {
+      color: var(--color-fg-2);
+    }
+
+    .ratio-bar {
+      height: 10px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .ratio-buy-label,
+    .ratio-give-label {
+      font-weight: 700;
+    }
+
+    .entry-card {
+      padding: 14px;
+      border-radius: 22px;
+    }
+
+    .entry-emoji {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+    }
+
+    .entry-amount {
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .entry-badge {
+      padding: 5px 10px;
+      border-radius: 999px;
+    }
+
+    .entry-badge.buy {
+      background: rgba(53,214,138,.14);
+      color: #96F0BF;
+    }
+
+    .entry-badge.skip {
+      background: rgba(255,123,139,.14);
+      color: #FFD0D6;
+    }
+
+    .settings-section {
+      gap: 8px;
+    }
+
+    .settings-group {
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .settings-row,
+    .category-row {
+      min-height: 60px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .settings-row-input {
+      height: auto;
+      min-height: 0;
+      border: none;
+      background: none;
+      box-shadow: none;
+      padding: 0;
+      max-width: 120px;
+      text-align: right;
+      color: #fff;
+    }
+
+    .settings-select {
+      min-height: 0;
+      height: auto;
+      padding: 0;
+      border: none;
+      background: none;
+      box-shadow: none;
+      color: #fff;
+    }
+
+    .rate-display {
+      color: #DEE6FF;
+      background: rgba(124,134,255,.10);
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .btn-delete-cat {
+      opacity: 1;
+      pointer-events: all;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: rgba(255,123,139,.12);
+      border: 1px solid rgba(255,123,139,.18);
+      color: #FFD0D6;
+    }
+
+    .category-row.default .btn-delete-cat {
+      opacity: .35;
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.06);
+      color: var(--color-fg-2);
+      pointer-events: none;
+    }
+
+    .modal-overlay {
+      background: rgba(4,8,16,.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .modal {
+      max-width: 360px;
+      border-radius: 28px;
+      padding: 24px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.12);
+    }
+
+    @media (max-width: 390px) {
+      .calculator-title-row {
+        flex-direction: column;
+      }
+
+      .calculator-rate-chip {
+        margin-top: 0;
+      }
+
+      .sheet-time {
+        font-size: 46px;
+      }
+    }
+  </style>
+
+
+  <style id="benji-ios-refresh">
+    :root {
+      --color-brand: #ff6a13;
+      --color-brand-2: #ff6a13;
+      --color-brand-tint: #fff1e8;
+      --color-bg-1: #ffffff;
+      --color-bg-2: #f5f5f7;
+      --color-fg-1: #111111;
+      --color-fg-2: #6f6f73;
+      --color-fg-3: #9b9ba1;
+      --color-stroke-1: #e5e5ea;
+      --color-success: #1aa756;
+      --color-error: #dc3f3f;
+      --surface-card: #ffffff;
+      --surface-elevated: #ffffff;
+      --shadow-soft: 0 1px 2px rgba(16, 24, 40, .03), 0 10px 24px rgba(16, 24, 40, .05);
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 28px;
+    }
+
+    html, body {
+      background: var(--color-bg-2) !important;
+      color: var(--color-fg-1);
+    }
+
+    body::before,
+    body::after,
+    #app::before,
+    #app::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    #app {
+      background: var(--color-bg-2) !important;
+      isolation: auto;
+    }
+
+    @media (min-width: 500px) {
+      #app {
+        border-radius: 48px;
+        border: 1px solid #d9d9de;
+        box-shadow: 0 24px 60px rgba(17, 24, 39, .10);
+      }
+    }
+
+    .screen,
+    #screen-auth,
+    #screen-onboarding,
+    #screen-app,
+    #tab-history,
+    #tab-watchlist,
+    #tab-settings {
+      background: var(--color-bg-2) !important;
+      color: var(--color-fg-1);
+    }
+
+    .auth-inner {
+      max-width: 390px;
+      min-height: 100%;
+      justify-content: center;
+      padding: 56px 28px 40px;
+    }
+
+    .auth-logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      background: var(--color-brand);
+      border: none;
+      box-shadow: 0 8px 20px rgba(255,106,19,.22);
+    }
+
+    .auth-title,
+    .step-title,
+    .history-title,
+    .watchlist-title,
+    .settings-title,
+    .calculator-title,
+    .modal-title,
+    .empty-state-title,
+    .settings-row-label,
+    .entry-name,
+    .category-row-name,
+    .stat-value {
+      color: var(--color-fg-1) !important;
+      text-shadow: none;
+    }
+
+    .auth-title,
+    .step-title,
+    .history-title,
+    .watchlist-title,
+    .settings-title,
+    .calculator-title {
+      letter-spacing: -.04em;
+    }
+
+    .auth-subtitle,
+    .step-subtitle,
+    .radio-desc,
+    .toggle-row div[style],
+    .rate-label,
+    .stat-sub,
+    .entry-time,
+    .entry-work,
+    .settings-row-value,
+    .confirm-text,
+    .empty-state-text,
+    .auth-toggle,
+    .bill-caption,
+    .sheet-overline,
+    .stat-label,
+    .settings-section-label,
+    .date-group-label {
+      color: var(--color-fg-2) !important;
+    }
+
+    .input-label,
+    .bill-label {
+      color: var(--color-fg-3) !important;
+      letter-spacing: .08em;
+    }
+
+    .input-field,
+    .settings-row-input,
+    .settings-select,
+    .modal-form-select,
+    .modal-textarea {
+      min-height: 54px;
+      border-radius: 16px;
+      border: 1px solid var(--color-stroke-1);
+      background: var(--color-bg-1);
+      color: var(--color-fg-1);
+      box-shadow: none;
+    }
+
+    .input-field::placeholder,
+    .settings-row-input::placeholder,
+    .modal-textarea::placeholder {
+      color: #b0b0b7;
+    }
+
+    .input-field:focus,
+    .settings-row-input:focus,
+    .settings-select:focus,
+    .modal-form-select:focus,
+    .modal-textarea:focus {
+      border-color: #ffd2b5;
+      box-shadow: 0 0 0 4px rgba(255,106,19,.10);
+    }
+
+    .btn-primary,
+    .btn-save,
+    .btn-modal-primary,
+    .enter-btn {
+      background: var(--color-brand) !important;
+      color: #fff !important;
+      box-shadow: none !important;
+      border: none;
+    }
+
+    .btn-cancel,
+    .btn-modal-cancel,
+    .btn-back {
+      background: #ececef !important;
+      color: var(--color-fg-1) !important;
+      border: 1px solid transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    .btn-modal-danger {
+      background: #ef4444 !important;
+      color: #fff !important;
+      box-shadow: none !important;
+      border: none;
+    }
+
+    .auth-toggle a,
+    .btn-link,
+    .btn-logout,
+    .btn-danger-link {
+      color: var(--color-brand) !important;
+    }
+
+    .auth-mode-btn {
+      min-height: 50px;
+      border-radius: 16px;
+      border: 1px solid var(--color-stroke-1);
+      background: #fff;
+      color: var(--color-fg-2);
+      box-shadow: none;
+    }
+
+    .auth-mode-btn.active {
+      background: var(--color-brand) !important;
+      color: #fff !important;
+      border-color: var(--color-brand) !important;
+      box-shadow: none !important;
+    }
+
+    .error-msg {
+      background: #fff1f1 !important;
+      border: 1px solid #ffd4d4 !important;
+      color: #b42318 !important;
+      border-radius: 14px;
+    }
+
+    .progress-dots {
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 24px 24px 0;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      background: #d7d7dc !important;
+    }
+
+    .progress-dot.active {
+      width: 28px;
+      background: var(--color-brand) !important;
+    }
+
+    .progress-dot.done {
+      background: #ffc6a4 !important;
+      opacity: 1;
+    }
+
+    .radio-option,
+    .toggle-row,
+    .stat-card,
+    .ratio-card,
+    .entry-card,
+    .settings-group,
+    .modal,
+    .result-highlight,
+    .dollar-bill,
+    .keypad-shell,
+    .sheet-result {
+      background: var(--surface-card) !important;
+      border: 1px solid var(--color-stroke-1) !important;
+      box-shadow: var(--shadow-soft) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    .radio-option,
+    .toggle-row,
+    .stat-card,
+    .ratio-card,
+    .entry-card,
+    .settings-group,
+    .result-highlight,
+    .dollar-bill,
+    .keypad-shell,
+    .sheet-result,
+    .modal {
+      border-radius: 22px !important;
+    }
+
+    .radio-option.selected {
+      background: #fff7f2 !important;
+      border-color: #ffd2b5 !important;
+    }
+
+    .radio-dot { border-color: #d1d1d6 !important; }
+    .radio-option.selected .radio-dot { border-color: var(--color-brand) !important; }
+    .radio-dot::after { background: var(--color-brand) !important; }
+    .radio-label, .toggle-label { color: var(--color-fg-1) !important; }
+    .toggle { background: #d1d1d6 !important; }
+    .toggle.on { background: var(--color-brand) !important; }
+
+    .result-highlight {
+      padding: 24px;
+      background: #fff8f4 !important;
+      border-color: #ffd8c2 !important;
+    }
+    .result-highlight .rate { color: var(--color-brand) !important; }
+
+    .history-header,
+    .watchlist-header,
+    .settings-header {
+      background: var(--color-bg-2) !important;
+      border-bottom: 1px solid transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      padding: 28px 20px 14px;
+    }
+
+    .history-title,
+    .watchlist-title,
+    .settings-title,
+    .calculator-title {
+      font-size: 34px;
+      margin-bottom: 14px;
+    }
+
+    .segmented-control {
+      background: #e9e9ee !important;
+      border: none !important;
+      border-radius: 14px;
+      padding: 3px;
+    }
+
+    .seg-btn {
+      height: 34px;
+      border-radius: 11px;
+      color: var(--color-fg-2) !important;
+    }
+
+    .seg-btn.active {
+      background: #fff !important;
+      color: var(--color-fg-1) !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08) !important;
+    }
+
+    .history-body,
+    .watchlist-body,
+    .settings-body {
+      padding: 18px 20px 18px;
+      gap: 16px;
+    }
+
+    .stats-grid { gap: 10px; }
+
+    .ratio-bar {
+      height: 10px;
+      background: #ededf1 !important;
+    }
+
+    .entry-card {
+      padding: 14px;
+      border-radius: 18px !important;
+    }
+
+    .entry-card.watchlist-card {
+      background: #fff9e7 !important;
+      border-color: #f6e6a7 !important;
+    }
+
+    .entry-emoji {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: #f2f2f5 !important;
+      color: var(--color-fg-1);
+    }
+
+    .entry-amount { color: var(--color-fg-1) !important; }
+
+    .entry-badge.buy {
+      background: #eaf8ef !important;
+      color: #15803d !important;
+    }
+
+    .entry-badge.skip {
+      background: #fff1f1 !important;
+      color: #c24141 !important;
+    }
+
+    .entry-badge.watchlist {
+      background: #fff8db !important;
+      color: #a16207 !important;
+    }
+
+    .settings-group { overflow: hidden; }
+
+    .settings-row,
+    .category-row {
+      min-height: 58px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-stroke-1) !important;
+      background: #fff;
+    }
+
+    .settings-row:last-child,
+    .category-row:last-child { border-bottom: none !important; }
+
+    .settings-row-input,
+    .settings-select {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      min-height: 0;
+      height: auto;
+      padding: 0;
+      color: var(--color-fg-1) !important;
+    }
+
+    .rate-display {
+      color: var(--color-brand) !important;
+      background: #fff7f2 !important;
+      border-top: 1px solid var(--color-stroke-1) !important;
+    }
+
+    .btn-delete-cat {
+      opacity: 1;
+      pointer-events: all;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: #fff1f1 !important;
+      border: 1px solid #ffd4d4 !important;
+      color: #c24141 !important;
+    }
+
+    .category-row.default .btn-delete-cat {
+      opacity: .42;
+      background: #f2f2f5 !important;
+      border-color: #ececf1 !important;
+      color: #9b9ba1 !important;
+      pointer-events: none;
+    }
+
+    #tab-calculator {
+      padding: 0 20px 0;
+      gap: 14px;
+      background: var(--color-bg-2) !important;
+      overflow: hidden;
+    }
+
+    .tab-content {
+      bottom: 104px;
+      padding-bottom: 12px;
+    }
+
+    .calculator-header {
+      padding: 28px 0 8px;
+      gap: 0;
+      flex: 0 0 auto;
+    }
+
+    .calculator-title-row {
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+
+    .dollar-bill {
+      min-height: 186px !important;
+      max-height: 186px !important;
+      height: 186px !important;
+      flex: 0 0 186px !important;
+      padding: 20px !important;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .dollar-bill::before,
+    .dollar-bill::after,
+    .bill-circle { display: none !important; content: none !important; }
+
+    .bill-amount {
+      font-size: 40px;
+      line-height: .96;
+      color: var(--color-fg-1) !important;
+    }
+
+    .bill-divider {
+      background: #ededf1 !important;
+    }
+
+    .bill-minutes {
+      font-size: clamp(30px, 7vw, 42px);
+      line-height: .98;
+      color: var(--color-fg-1) !important;
+    }
+
+    .keypad-container {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .keypad-shell {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+      padding: 14px;
+      background: #ececef !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .keypad-grid {
+      gap: 10px;
+    }
+
+    .key-btn {
+      background: #fff !important;
+      border: 1px solid #e5e5ea !important;
+      border-radius: 20px !important;
+      color: var(--color-fg-1) !important;
+      font-size: 28px;
+      font-weight: 600;
+      box-shadow: none !important;
+    }
+
+    .key-btn:active {
+      background: #f7f7f9 !important;
+      transform: scale(.98);
+    }
+
+    .key-btn.key-delete {
+      color: var(--color-fg-2) !important;
+      font-size: 20px;
+    }
+
+    .enter-btn {
+      min-height: 58px;
+      border-radius: 18px;
+      font-size: 18px;
+    }
+
+    .tab-bar {
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      height: 76px;
+      border-radius: 24px;
+      background: #ececef !important;
+      border: 1px solid #e1e1e6 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      padding: 8px;
+      gap: 6px;
+    }
+
+    .tab-btn {
+      margin: 0 !important;
+      border-radius: 18px;
+      padding: 8px 0 10px;
+      color: var(--color-fg-2) !important;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tab-btn.active {
+      background: #fff !important;
+      color: var(--color-brand) !important;
+      box-shadow: 0 1px 2px rgba(16,24,40,.06) !important;
+    }
+
+    .tab-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .overlay {
+      background: rgba(17,24,39,.24) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    .bottom-sheet {
+      background: #fff !important;
+      border: 1px solid var(--color-stroke-1) !important;
+      border-bottom: none !important;
+      border-radius: 28px 28px 0 0 !important;
+      box-shadow: 0 -12px 32px rgba(17,24,39,.10) !important;
+      padding: 0 20px calc(22px + env(safe-area-inset-bottom));
+    }
+
+    .sheet-handle {
+      background: #d1d1d6 !important;
+      margin: 12px auto 18px;
+    }
+
+    .sheet-result {
+      margin-bottom: 18px;
+      padding: 18px;
+      text-align: left;
+      background: #fafafc !important;
+      border-color: var(--color-stroke-1) !important;
+    }
+
+    .sheet-time,
+    .sheet-amount {
+      color: var(--color-fg-1) !important;
+    }
+
+    .sheet-time {
+      font-size: 48px;
+      margin-bottom: 0;
+    }
+
+    .sheet-amount-block {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--color-stroke-1) !important;
+    }
+
+    .sheet-amount {
+      display: block;
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: 700;
+      background: none !important;
+      border: none !important;
+      padding: 0;
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .action-btn {
+      min-height: 84px;
+      padding: 14px 10px;
+      border-radius: 18px !important;
+      border: 1px solid transparent !important;
+      box-shadow: none !important;
+      font-size: 14px;
+      font-weight: 700;
+      background: #f2f2f5 !important;
+      color: var(--color-fg-1) !important;
+    }
+
+    .action-btn.buy-btn {
+      background: #ecf9f0 !important;
+      color: #15803d !important;
+      border-color: #cdeed7 !important;
+    }
+
+    .action-btn.watchlist-btn {
+      background: #fff8db !important;
+      color: #a16207 !important;
+      border-color: #f6e6a7 !important;
+    }
+
+    .action-btn.giveup-btn {
+      background: #fff1f1 !important;
+      color: #c24141 !important;
+      border-color: #ffd4d4 !important;
+    }
+
+    .action-btn.notrack-btn {
+      background: #ececef !important;
+      color: var(--color-fg-1) !important;
+      border-color: transparent !important;
+    }
+
+    .action-secondary-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .action-btn-compact {
+      width: calc((100% - 20px) / 3);
+      min-height: 48px;
+      padding: 0 12px;
+    }
+
+    .category-pill {
+      background: #fff !important;
+      border: 1px solid var(--color-stroke-1) !important;
+      color: var(--color-fg-1) !important;
+      border-radius: 999px;
+    }
+
+    .category-pill.selected {
+      background: #fff1e8 !important;
+      border-color: #ffd2b5 !important;
+      color: var(--color-brand) !important;
+      font-weight: 700;
+    }
+
+    .success-overlay {
+      background: rgba(255,255,255,.92) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    .success-circle {
+      background: var(--color-success) !important;
+      box-shadow: none !important;
+    }
+
+    .success-text { color: var(--color-fg-1) !important; }
+
+    .detail-action-btn {
+      border-radius: 16px;
+      border: 1px solid transparent;
+      box-shadow: none;
+    }
+
+    .detail-action-btn.buy-btn {
+      background: #ecf9f0 !important;
+      color: #15803d !important;
+      border-color: #cdeed7 !important;
+    }
+
+    .detail-action-btn.skip-btn {
+      background: #fff1f1 !important;
+      color: #c24141 !important;
+      border-color: #ffd4d4 !important;
+    }
+
+    .detail-action-btn.forget-btn {
+      background: #fff8db !important;
+      color: #a16207 !important;
+      border-color: #f6e6a7 !important;
+    }
+
+    .modal-overlay {
+      background: rgba(17,24,39,.24) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    .modal {
+      background: #fff !important;
+      max-width: 360px;
+      padding: 22px;
+      border-radius: 24px !important;
+      border: 1px solid var(--color-stroke-1) !important;
+      box-shadow: 0 16px 40px rgba(17,24,39,.12) !important;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #d1d1d6 !important;
+    }
+
+    @media (max-width: 390px) {
+      .history-title,
+      .watchlist-title,
+      .settings-title,
+      .calculator-title,
+      .auth-title,
+      .step-title {
+        font-size: 30px;
+      }
+
+      .sheet-time {
+        font-size: 42px;
+      }
+
+      .dollar-bill {
+        min-height: 176px !important;
+        max-height: 176px !important;
+        height: 176px !important;
+        flex-basis: 176px !important;
+      }
+    }
+  </style>
+
+</head>
+<body>
+<div id="app-wrapper">
+<div id="app">
+
+  <!-- ============================================================
+       AUTH SCREEN
+       ============================================================ -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-inner">
+      <div class="auth-logo">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M26 9v3c4 .7 7 3.6 7 7h-5c0-2-1.8-3.5-4-3.5s-4 1.5-4 3.5c0 2.1 1.6 3 5 3.8 5 1.3 11 2.8 11 9.7 0 3.4-3.1 6.2-7 6.9v3h-5v-3c-4-.7-7-3.6-7-7h5c0 2 1.8 3.5 4 3.5s4-1.5 4-3.5c0-2.1-1.6-3-5-3.8-5-1.3-11-2.8-11-9.7 0-3.4 3.1-6.2 7-6.9V9h5z"/>
+        </svg>
+      </div>
+      <div class="auth-title">Benji</div>
+      <div class="auth-mode-switch" role="tablist" aria-label="Authentication mode">
+        <button class="auth-mode-btn active" type="button" id="auth-mode-login" onclick="switchAuthMode('login')">Log In</button>
+        <button class="auth-mode-btn" type="button" id="auth-mode-signup" onclick="switchAuthMode('signup')">Sign Up</button>
+      </div>
+
+      <!-- Login Form -->
+      <form class="auth-form" id="form-login" onsubmit="handleLogin(event)">
+        <div class="input-group">
+          <label class="input-label" for="login-username">Username</label>
+          <input class="input-field" type="text" id="login-username" placeholder="Enter username" autocomplete="username" required>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="login-password">Password</label>
+          <input class="input-field" type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" required>
+        </div>
+        <div class="error-msg" id="login-error" role="alert"></div>
+        <button type="submit" class="btn-primary">Log In</button>
+      </form>
+
+      <!-- Sign Up Form (hidden by default) -->
+      <form class="auth-form" id="form-signup" style="display:none" onsubmit="handleSignup(event)">
+        <div class="input-group">
+          <label class="input-label" for="signup-username">Username</label>
+          <input class="input-field" type="text" id="signup-username" placeholder="Choose a username" autocomplete="username" required>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="signup-password">Password</label>
+          <input class="input-field" type="password" id="signup-password" placeholder="At least 6 characters" autocomplete="new-password" required>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="signup-confirm">Confirm Password</label>
+          <input class="input-field" type="password" id="signup-confirm" placeholder="Repeat password" autocomplete="new-password" required>
+        </div>
+        <div class="error-msg" id="signup-error" role="alert"></div>
+        <button type="submit" class="btn-primary">Create Account</button>
+      </form>
+    </div>
+  </div><!-- end #screen-auth -->
+
+
+  <!-- ============================================================
+       ONBOARDING SCREEN
+       ============================================================ -->
+  <div id="screen-onboarding" class="screen">
+    <div class="progress-dots">
+      <div class="progress-dot active" data-dot="1"></div>
+      <div class="progress-dot"        data-dot="2"></div>
+      <div class="progress-dot"        data-dot="3"></div>
+      <div class="progress-dot"        data-dot="4"></div>
+      <div class="progress-dot"        data-dot="5"></div>
+    </div>
+
+    <div class="onboarding-body">
+
+      <!-- Step 1: Welcome -->
+      <div class="onboarding-step active" data-step="1">
+        <div class="step-emoji">👋</div>
+        <div class="step-title">See every price in time</div>
+        <div class="step-subtitle">A faster way to decide whether something is worth the work behind it.</div>
+        <div class="step-content"></div>
+      </div>
+
+      <!-- Step 2: Income Type -->
+      <div class="onboarding-step" data-step="2">
+        <div class="step-emoji">💰</div>
+        <div class="step-title">How do you earn?</div>
+        <div class="step-subtitle">We'll use this to calculate your real earning rate.</div>
+        <div class="step-content">
+          <div class="radio-group" id="income-type-group">
+            <label class="radio-option selected" data-value="hourly">
+              <input type="radio" name="incomeType" value="hourly" checked>
+              <div class="radio-dot"></div>
+              <div><div class="radio-label">Hourly</div><div class="radio-desc">Paid per hour worked</div></div>
+            </label>
+            <label class="radio-option" data-value="monthly">
+              <input type="radio" name="incomeType" value="monthly">
+              <div class="radio-dot"></div>
+              <div><div class="radio-label">Monthly</div><div class="radio-desc">Fixed monthly salary</div></div>
+            </label>
+            <label class="radio-option" data-value="annual">
+              <input type="radio" name="incomeType" value="annual">
+              <div class="radio-dot"></div>
+              <div><div class="radio-label">Annual</div><div class="radio-desc">Yearly salary or income</div></div>
+            </label>
+          </div>
+          <div class="input-group">
+            <label class="input-label" id="income-amount-label">Hourly Rate ($)</label>
+            <input class="input-field" type="number" id="onboarding-income-amount" placeholder="e.g. 25" min="0" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Hours Worked -->
+      <div class="onboarding-step" data-step="3">
+        <div class="step-emoji">⏰</div>
+        <div class="step-title">Hours per week</div>
+        <div class="step-subtitle">How many hours do you typically work each week?</div>
+        <div class="step-content">
+          <div class="input-group">
+            <label class="input-label" for="onboarding-hours">Hours per week</label>
+            <input class="input-field" type="number" id="onboarding-hours" placeholder="40" value="40" min="1" max="168">
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Real Wages -->
+      <div class="onboarding-step" data-step="4">
+        <div class="step-emoji">🎯</div>
+        <div class="step-title">Real wage mode</div>
+        <div class="step-subtitle">Account for fixed monthly expenses to see your true disposable earning rate.</div>
+        <div class="step-content">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Enable Real Wages</div>
+              <div style="font-size:13px;color:var(--color-fg-2);margin-top:2px">Deduct fixed expenses from rate</div>
+            </div>
+            <button class="toggle" id="onboarding-real-wage-toggle" type="button" onclick="toggleRealWage(this)"></button>
+          </div>
+          <div id="real-wage-input" style="display:none">
+            <div class="input-group">
+              <label class="input-label" for="onboarding-expenses">Monthly Fixed Expenses ($)</label>
+              <input class="input-field" type="number" id="onboarding-expenses" placeholder="e.g. 2000" min="0" step="0.01">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: All Set -->
+      <div class="onboarding-step" data-step="5">
+        <div class="step-emoji">🎉</div>
+        <div class="step-title">You're all set!</div>
+        <div class="step-subtitle">Here's what every minute of your work is worth:</div>
+        <div class="step-content">
+          <div class="result-highlight">
+            <div class="rate" id="onboarding-rate-display">$0.0000</div>
+            <div class="rate-label">per minute of work</div>
+          </div>
+          <p style="font-size:14px;color:var(--color-fg-2);line-height:1.65;padding:0 4px">
+            Every purchase you track will show exactly how many minutes of your life it took to earn that money. You can update your income any time in Settings.
+          </p>
+        </div>
+      </div>
+
+    </div><!-- end .onboarding-body -->
+
+    <div class="onboarding-footer">
+      <button class="btn-primary" id="onboarding-next-btn" type="button" onclick="onboardingNext()">Continue</button>
+      <button class="btn-back"    id="onboarding-back-btn" type="button" onclick="onboardingBack()" style="display:none">← Back</button>
+    </div>
+  </div><!-- end #screen-onboarding -->
+
+
+  <!-- ============================================================
+       APP SCREEN
+       ============================================================ -->
+  <div id="screen-app" class="screen">
+
+    <!-- === CALCULATOR TAB === -->
+    <div class="tab-content active" id="tab-calculator">
+      <div class="calculator-header">
+        <div class="calculator-title-row">
+          <div class="calculator-title">Benji</div>
+        </div>
+      </div>
+
+      <div class="dollar-bill" id="dollar-bill">
+        <div class="bill-label">Purchase amount</div>
+        <div class="bill-amount" id="bill-amount">$0</div>
+        <div class="bill-divider" id="bill-divider" style="display:none"></div>
+        <div class="bill-label" id="bill-time-label" style="display:none">Time to earn</div>
+        <div class="bill-minutes" id="bill-minutes"></div>
+        <div class="bill-caption" id="bill-caption"></div>
+      </div>
+
+      <div class="keypad-container">
+        <div class="keypad-shell">
+          <div class="keypad-grid">
+            <button class="key-btn" type="button" onclick="keyPress('1')">1</button>
+            <button class="key-btn" type="button" onclick="keyPress('2')">2</button>
+            <button class="key-btn" type="button" onclick="keyPress('3')">3</button>
+            <button class="key-btn" type="button" onclick="keyPress('4')">4</button>
+            <button class="key-btn" type="button" onclick="keyPress('5')">5</button>
+            <button class="key-btn" type="button" onclick="keyPress('6')">6</button>
+            <button class="key-btn" type="button" onclick="keyPress('7')">7</button>
+            <button class="key-btn" type="button" onclick="keyPress('8')">8</button>
+            <button class="key-btn" type="button" onclick="keyPress('9')">9</button>
+            <button class="key-btn" type="button" onclick="keyPress('.')">.</button>
+            <button class="key-btn" type="button" onclick="keyPress('0')">0</button>
+            <button class="key-btn key-delete" type="button" onclick="keyPress('backspace')" aria-label="Backspace">⌫</button>
+          </div>
+          <button class="enter-btn" type="button" onclick="handleEnter()">Log</button>
+        </div>
+      </div>
+    </div><!-- end #tab-calculator -->
+
+
+    <!-- === HISTORY TAB === -->
+    <div class="tab-content" id="tab-history">
+      <div class="history-header">
+        <div class="history-title">History</div>
+        <div class="segmented-control" role="tablist" aria-label="Time period">
+          <button class="seg-btn active" type="button" data-period="daily"   onclick="setHistoryPeriod('daily')">Daily</button>
+          <button class="seg-btn"        type="button" data-period="weekly"  onclick="setHistoryPeriod('weekly')">Weekly</button>
+          <button class="seg-btn"        type="button" data-period="monthly" onclick="setHistoryPeriod('monthly')">Monthly</button>
+          <button class="seg-btn"        type="button" data-period="yearly"  onclick="setHistoryPeriod('yearly')">Yearly</button>
+        </div>
+      </div>
+      <div class="history-body" id="history-body"></div>
+    </div><!-- end #tab-history -->
+
+
+    <!-- === WATCHLIST TAB === -->
+    <div class="tab-content" id="tab-watchlist">
+      <div class="watchlist-header">
+        <div class="watchlist-title">Watchlist</div>
+      </div>
+      <div class="watchlist-body" id="watchlist-body"></div>
+    </div><!-- end #tab-watchlist -->
+
+
+    <!-- === SETTINGS TAB === -->
+    <div class="tab-content" id="tab-settings">
+      <div class="settings-header">
+        <div class="settings-title">Settings</div>
+      </div>
+      <div class="settings-body" id="settings-body"></div>
+    </div><!-- end #tab-settings -->
+
+
+    <!-- Tab Bar -->
+    <nav class="tab-bar" role="tablist">
+      <button class="tab-btn active" type="button" data-tab="calculator" onclick="switchTab('calculator')" aria-label="Calculator">
+        <!-- Calculator icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2"/>
+          <line x1="8" y1="6" x2="16" y2="6"/>
+          <line x1="8" y1="10" x2="10" y2="10"/>
+          <line x1="12" y1="10" x2="14" y2="10"/>
+          <line x1="16" y1="10" x2="16" y2="10" stroke-width="2.5"/>
+          <line x1="8" y1="14" x2="10" y2="14"/>
+          <line x1="12" y1="14" x2="14" y2="14"/>
+          <line x1="16" y1="14" x2="16" y2="14" stroke-width="2.5"/>
+          <line x1="8" y1="18" x2="10" y2="18"/>
+          <line x1="12" y1="18" x2="14" y2="18"/>
+          <line x1="16" y1="18" x2="16" y2="18" stroke-width="2.5"/>
+        </svg>
+        Calculator
+      </button>
+      <button class="tab-btn" type="button" data-tab="history" onclick="switchTab('history')" aria-label="History">
+        <!-- Clock icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        History
+      </button>
+      <button class="tab-btn" type="button" data-tab="watchlist" onclick="switchTab('watchlist')" aria-label="Watchlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z"/>
+        </svg>
+        Watchlist
+      </button>
+      <button class="tab-btn" type="button" data-tab="settings" onclick="switchTab('settings')" aria-label="Settings">
+        <!-- Gear icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Settings
+      </button>
+    </nav>
+
+
+    <!-- Result Bottom Sheet -->
+    <div class="overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+    <div class="bottom-sheet" id="result-sheet" role="dialog" aria-modal="true" aria-label="Purchase decision">
+      <div class="sheet-handle"></div>
+
+      <div class="sheet-result">
+        <div class="sheet-overline">Time to earn</div>
+        <div class="sheet-time" id="sheet-time-text"></div>
+        <div class="sheet-amount-block">
+          <div class="sheet-overline">AMOUNT</div>
+          <div class="sheet-amount" id="sheet-amount-text"></div>
+        </div>
+      </div>
+
+      <div id="sheet-actions-wrap">
+        <div class="action-buttons" id="sheet-actions">
+          <button class="action-btn buy-btn" type="button" onclick="selectAction('buy')">
+            <span>Buy</span>
+          </button>
+          <button class="action-btn watchlist-btn" type="button" onclick="selectAction('watchlist')">
+            <span>Watch List</span>
+          </button>
+          <button class="action-btn giveup-btn" type="button" onclick="selectAction('skip')">
+            <span>Skip</span>
+          </button>
+        </div>
+        <div class="action-secondary-row">
+          <button class="action-btn notrack-btn action-btn-compact" type="button" onclick="selectAction('no_track')">No Log</button>
+        </div>
+      </div>
+
+      <div class="sheet-form" id="sheet-form">
+        <div class="input-group">
+          <label class="input-label" for="entry-name-input">What was this for?</label>
+          <input class="input-field" type="text" id="entry-name-input" placeholder="e.g. Iced Latte" maxlength="80">
+        </div>
+        <div class="categories-scroll" id="sheet-categories" role="listbox" aria-label="Category"></div>
+        <div class="sheet-save-row">
+          <button class="btn-save"   type="button" onclick="saveEntry()">Save</button>
+          <button class="btn-cancel" type="button" onclick="cancelEntry()">Cancel</button>
+        </div>
+      </div>
+    </div><!-- end .bottom-sheet -->
+
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="success-overlay" role="status" aria-live="polite">
+      <div class="success-circle">
+        <svg viewBox="0 0 48 48" fill="none">
+          <path class="checkmark-path"
+            d="M12 24 L21 33 L36 15"
+            stroke="white" stroke-width="4"
+            stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="success-text">Saved</div>
+    </div>
+
+
+    <!-- Modal (shared: Add Category + Confirm dialogs) -->
+    <div class="modal-overlay" id="modal-overlay" onclick="onModalOverlayClick(event)">
+      <div class="modal" id="modal-content" role="dialog" aria-modal="true"></div>
+    </div>
+
+  </div><!-- end #screen-app -->
+
+</div><!-- end #app -->
+</div><!-- end #app-wrapper -->
+
+<script>
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+const DEFAULT_CATEGORIES = [
+  '🍫 Snacks', '☕ Coffee', '🍽️ Dining', '🛍️ Shopping',
+  '🎮 Entertainment', '🚗 Transport', '📱 Tech', '💊 Health',
+  '📚 Education', '🎁 Gifts', '❓ Other'
+];
+
+const STORAGE_KEY = 'spendy_users';
+const SESSION_KEY = 'spendy_user';
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+let currentUser    = null;
+let calcInput      = '0';
+let currentAmount  = 0;
+let currentDecision= null;
+let historyPeriod  = 'daily';
+let onboardingStep = 1;
+let onboardingData = {
+  incomeType: 'hourly', incomeAmount: 0,
+  hoursPerWeek: 40, realWageEnabled: false, monthlyFixedExpenses: 0
+};
+
+/* ============================================================
+   SECURITY — XSS prevention
+   ============================================================ */
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str ?? '')));
+  return d.innerHTML;
+}
+
+/* ============================================================
+   CRYPTO — SHA-256 via SubtleCrypto
+   ============================================================ */
+async function hashPassword(password) {
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ============================================================
+   STORAGE HELPERS
+   ============================================================ */
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveUsers(u) { localStorage.setItem(STORAGE_KEY, JSON.stringify(u)); }
+
+function getCurrentUserData() { return getUsers()[currentUser] || null; }
+function saveCurrentUserData(data) {
+  const u = getUsers(); u[currentUser] = data; saveUsers(u);
+}
+
+function getUserSettings()   { return getCurrentUserData()?.settings   || defaultSettings(); }
+function getUserEntries()    { return getCurrentUserData()?.entries    || []; }
+function getUserCategories() { return getCurrentUserData()?.categories || [...DEFAULT_CATEGORIES]; }
+
+function defaultSettings() {
+  return {
+    incomeType: 'hourly', incomeAmount: 10,
+    hoursPerWeek: 40,
+    realWageEnabled: false, monthlyFixedExpenses: 0,
+    onboardingComplete: false
+  };
+}
+
+function generateId() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+/* ============================================================
+   EARNING RATE MATH
+   ============================================================ */
+function calcEarningPerMinute(s) {
+  const { incomeType, incomeAmount, hoursPerWeek, realWageEnabled, monthlyFixedExpenses } = s;
+  let perMin = 0;
+  // 4.333... = average weeks per month (52 weeks / 12 months ≈ 4.33). This
+  // standard payroll approximation matches the spec and common industry usage.
+  const WEEKS_PER_MONTH = 52 / 12;
+  if (incomeType === 'hourly')   perMin = incomeAmount / 60;
+  if (incomeType === 'monthly')  perMin = incomeAmount / (hoursPerWeek * WEEKS_PER_MONTH) / 60;
+  if (incomeType === 'annual')   perMin = incomeAmount / (hoursPerWeek * 52)               / 60;
+  if (realWageEnabled && monthlyFixedExpenses > 0) {
+    perMin = Math.max(0, perMin - monthlyFixedExpenses / (hoursPerWeek * WEEKS_PER_MONTH) / 60);
+  }
+  return perMin;
+}
+
+function formatMinutes(minutes) {
+  if (minutes <= 0) return '0 mins';
+  if (minutes < 1)  return `${Math.round(minutes * 60)} secs`;
+  if (minutes < 60) {
+    const m = Math.round(minutes);
+    return `${m} min${m !== 1 ? 's' : ''}`;
+  }
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  const hStr = `${h} hr${h !== 1 ? 's' : ''}`;
+  return m === 0 ? hStr : `${hStr} ${m} min${m !== 1 ? 's' : ''}`;
+}
+
+function formatCurrency(n) {
+  return '$' + parseFloat(n).toFixed(2);
+}
+
+function normalizeDecision(decision) {
+  if (decision === 'skip') return 'skip';
+  if (decision === 'watch_list') return 'watchlist';
+  return decision;
+}
+
+function getHistoryEntries() {
+  return getUserEntries().filter(e => normalizeDecision(e.decision) !== 'watchlist');
+}
+
+function getWatchlistEntries() {
+  return getUserEntries().filter(e => normalizeDecision(e.decision) === 'watchlist');
+}
+
+function getEntryRate(entry) {
+  if (entry && entry.amount > 0 && entry.minutes > 0) return entry.amount / entry.minutes;
+  return calcEarningPerMinute(getUserSettings());
+}
+
+/* ============================================================
+   SCREEN MANAGEMENT
+   ============================================================ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+function switchAuthMode(mode) {
+  const isSignup = mode === 'signup';
+  document.getElementById('form-login').style.display  = isSignup ? 'none' : 'flex';
+  document.getElementById('form-signup').style.display = isSignup ? 'flex' : 'none';
+  document.getElementById('auth-mode-login').classList.toggle('active', !isSignup);
+  document.getElementById('auth-mode-signup').classList.toggle('active', isSignup);
+  setError(document.getElementById('login-error'), '');
+  setError(document.getElementById('signup-error'), '');
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+
+  if (!username || !password) return setError(errEl, 'Please enter username and password.');
+
+  const users = getUsers();
+  if (!users[username]) return setError(errEl, 'Account not found. Please sign up.');
+
+  const hash = await hashPassword(password);
+  if (users[username].passwordHash !== hash) return setError(errEl, 'Incorrect password. Try again.');
+
+  setError(errEl, '');
+  sessionStorage.setItem(SESSION_KEY, username);
+  currentUser = username;
+  postLogin();
+}
+
+async function handleSignup(e) {
+  e.preventDefault();
+  const username = document.getElementById('signup-username').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const confirm  = document.getElementById('signup-confirm').value;
+  const errEl    = document.getElementById('signup-error');
+
+  if (!username || !password) return setError(errEl, 'Please fill in all fields.');
+  if (username.length < 3)    return setError(errEl, 'Username must be at least 3 characters.');
+  if (password.length < 6)    return setError(errEl, 'Password must be at least 6 characters.');
+  if (password !== confirm)   return setError(errEl, 'Passwords do not match.');
+
+  const users = getUsers();
+  if (users[username])        return setError(errEl, 'Username already taken. Choose another.');
+
+  const hash = await hashPassword(password);
+  users[username] = {
+    passwordHash: hash,
+    settings:     defaultSettings(),
+    entries:      [],
+    categories:   [...DEFAULT_CATEGORIES]
+  };
+  saveUsers(users);
+
+  setError(errEl, '');
+  sessionStorage.setItem(SESSION_KEY, username);
+  currentUser = username;
+  postLogin();
+}
+
+function postLogin() {
+  const settings = getUserSettings();
+  if (!settings.onboardingComplete) {
+    showScreen('onboarding');
+    startOnboarding();
+  } else {
+    showScreen('app');
+    renderApp();
+  }
+}
+
+function handleLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  currentUser = null;
+  calcInput   = '0';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  switchAuthMode('login');
+  showScreen('auth');
+}
+
+function setError(el, msg) {
+  el.textContent = msg;
+  el.classList.toggle('visible', !!msg);
+}
+
+/* ============================================================
+   ONBOARDING
+   ============================================================ */
+function startOnboarding() {
+  onboardingStep = 1;
+  onboardingData = { incomeType: 'hourly', incomeAmount: 0, hoursPerWeek: 40, realWageEnabled: false, monthlyFixedExpenses: 0 };
+  // Reset radio selection UI
+  document.querySelectorAll('#income-type-group .radio-option').forEach(opt => {
+    const isHourly = opt.dataset.value === 'hourly';
+    opt.classList.toggle('selected', isHourly);
+    opt.querySelector('input').checked = isHourly;
+  });
+  document.getElementById('onboarding-income-amount').value = '';
+  document.getElementById('onboarding-hours').value         = '40';
+  document.getElementById('onboarding-real-wage-toggle').classList.remove('on');
+  document.getElementById('real-wage-input').style.display  = 'none';
+  document.getElementById('onboarding-expenses').value      = '';
+  renderOnboardingStep(1);
+}
+
+function renderOnboardingStep(step) {
+  document.querySelectorAll('.onboarding-step').forEach(el =>
+    el.classList.toggle('active', parseInt(el.dataset.step) === step)
+  );
+  document.querySelectorAll('.progress-dot').forEach(dot => {
+    const n = parseInt(dot.dataset.dot);
+    dot.classList.toggle('active', n === step);
+    dot.classList.toggle('done', n < step);
+  });
+  document.getElementById('onboarding-next-btn').textContent = step === 5 ? 'Get Started' : 'Continue';
+  const backBtn = document.getElementById('onboarding-back-btn');
+  backBtn.style.display = 'flex';
+  backBtn.textContent = step === 1 ? 'Back to sign in' : 'Back';
+  if (step === 2) updateIncomeAmountLabel();
+  if (step === 5) renderOnboardingRate();
+}
+
+function updateIncomeAmountLabel() {
+  const map = { hourly: 'Hourly Rate ($)', monthly: 'Monthly Salary ($)', annual: 'Annual Salary ($)' };
+  document.getElementById('income-amount-label').textContent = map[onboardingData.incomeType] || 'Amount ($)';
+}
+
+function renderOnboardingRate() {
+  const rate = calcEarningPerMinute(onboardingData);
+  document.getElementById('onboarding-rate-display').textContent = '$' + rate.toFixed(4);
+}
+
+function onboardingNext() {
+  if (!collectOnboardingStep(onboardingStep)) return;
+  if (onboardingStep < 5) {
+    onboardingStep++;
+    renderOnboardingStep(onboardingStep);
+  } else {
+    completeOnboarding();
+  }
+}
+
+function onboardingBack() {
+  if (onboardingStep === 1) {
+    showScreen('auth');
+    return;
+  }
+  if (onboardingStep > 1) { onboardingStep--; renderOnboardingStep(onboardingStep); }
+}
+
+function collectOnboardingStep(step) {
+  if (step === 2) {
+    const amt = parseFloat(document.getElementById('onboarding-income-amount').value);
+    if (!amt || amt <= 0) { alert('Please enter a valid income amount.'); return false; }
+    onboardingData.incomeAmount = amt;
+  }
+  if (step === 3) {
+    const hrs = parseFloat(document.getElementById('onboarding-hours').value);
+    if (!hrs || hrs <= 0 || hrs > 168) { alert('Please enter valid hours (1-168).'); return false; }
+    onboardingData.hoursPerWeek = hrs;
+  }
+  if (step === 4) {
+    const toggle = document.getElementById('onboarding-real-wage-toggle');
+    onboardingData.realWageEnabled = toggle.classList.contains('on');
+    if (onboardingData.realWageEnabled) {
+      onboardingData.monthlyFixedExpenses = parseFloat(document.getElementById('onboarding-expenses').value) || 0;
+    }
+  }
+  return true;
+}
+
+function toggleRealWage(btn) {
+  btn.classList.toggle('on');
+  document.getElementById('real-wage-input').style.display = btn.classList.contains('on') ? 'block' : 'none';
+}
+
+function completeOnboarding() {
+  const data = getCurrentUserData();
+  data.settings = {
+    incomeType:           onboardingData.incomeType,
+    incomeAmount:         onboardingData.incomeAmount,
+    hoursPerWeek:         onboardingData.hoursPerWeek,
+    realWageEnabled:      onboardingData.realWageEnabled,
+    monthlyFixedExpenses: onboardingData.monthlyFixedExpenses,
+    onboardingComplete:   true
+  };
+  saveCurrentUserData(data);
+  showScreen('app');
+  renderApp();
+}
+
+/* Income type radio — onboarding */
+document.getElementById('income-type-group').addEventListener('click', function (e) {
+  const opt = e.target.closest('.radio-option');
+  if (!opt) return;
+  document.querySelectorAll('#income-type-group .radio-option').forEach(o => {
+    o.classList.remove('selected');
+    o.querySelector('input').checked = false;
+  });
+  opt.classList.add('selected');
+  opt.querySelector('input').checked = true;
+  onboardingData.incomeType = opt.dataset.value;
+  updateIncomeAmountLabel();
+});
+
+/* ============================================================
+   APP INIT & TAB SWITCHING
+   ============================================================ */
+function renderApp() {
+  calcInput = '0';
+  const rate = calcEarningPerMinute(getUserSettings());
+  updateBillDisplay('0', rate);
+  updateRateChip(rate);
+  renderHistory();
+  renderWatchlist();
+  renderSettings();
+}
+
+function updateRateChip(rate) {
+  const chip = document.getElementById('calculator-rate-chip');
+  if (chip) chip.textContent = `$${rate.toFixed(4)} / min`;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'history') renderHistory();
+  if (tab === 'watchlist') renderWatchlist();
+  if (tab === 'settings') renderSettings();
+}
+
+/* ============================================================
+   CALCULATOR
+   ============================================================ */
+function updateBillDisplay(input, rate) {
+  const amount = parseFloat(input) || 0;
+  const amountEl = document.getElementById('bill-amount');
+  const minsEl = document.getElementById('bill-minutes');
+  const captionEl = document.getElementById('bill-caption');
+  const timeLabelEl = document.getElementById('bill-time-label');
+  const dividerEl = document.getElementById('bill-divider');
+
+  if (!input || input === '0') {
+    amountEl.textContent = '$0';
+    minsEl.textContent = '';
+    if (captionEl) captionEl.textContent = '';
+    if (timeLabelEl) timeLabelEl.style.display = 'none';
+    if (dividerEl) dividerEl.style.display = 'none';
+    return;
+  }
+
+  const parts = input.split('.');
+  const intStr = parseInt(parts[0] || '0', 10).toLocaleString();
+  const display = parts.length > 1 ? `$${intStr}.${parts[1]}` : `$${intStr}`;
+  amountEl.textContent = display;
+
+  if (timeLabelEl) timeLabelEl.style.display = 'block';
+  if (dividerEl) dividerEl.style.display = 'block';
+
+  if (rate > 0 && amount > 0) {
+    minsEl.textContent = formatMinutes(amount / rate);
+    if (captionEl) captionEl.textContent = '';
+  } else {
+    minsEl.textContent = '—';
+    if (captionEl) captionEl.textContent = 'Set your income in Settings to calculate time.';
+  }
+}
+
+function keyPress(key) {
+  if (key === 'backspace') {
+    calcInput = calcInput.length > 1 ? calcInput.slice(0, -1) : '0';
+  } else if (key === '.') {
+    if (!calcInput.includes('.')) calcInput += '.';
+  } else {
+    // Guard: max 2 decimal places, max 8 integer digits
+    if (calcInput.includes('.') && calcInput.split('.')[1].length >= 2) return;
+    if (!calcInput.includes('.') && calcInput.replace(/^0/, '').length >= 8) return;
+    calcInput = (calcInput === '0') ? key : calcInput + key;
+  }
+
+  const rate = calcEarningPerMinute(getUserSettings());
+  updateBillDisplay(calcInput, rate);
+}
+
+function handleEnter() {
+  const amount = parseFloat(calcInput) || 0;
+  if (amount <= 0) return;
+
+  currentAmount = amount;
+  const rate = calcEarningPerMinute(getUserSettings());
+  const minutes = rate > 0 ? amount / rate : 0;
+
+  document.getElementById('sheet-amount-text').textContent = formatCurrency(amount);
+  document.getElementById('sheet-time-text').textContent = rate > 0 ? formatMinutes(minutes) : '—';
+
+  // Reset to action buttons view
+  document.getElementById('sheet-actions-wrap').style.display = 'block';
+  document.getElementById('sheet-form').classList.remove('visible');
+  currentDecision = null;
+  openSheet();
+}
+
+function openSheet() {
+  document.getElementById('sheet-overlay').classList.add('visible');
+  document.getElementById('result-sheet').classList.add('open');
+}
+
+function closeSheet() {
+  document.getElementById('sheet-overlay').classList.remove('visible');
+  document.getElementById('result-sheet').classList.remove('open');
+  document.getElementById('sheet-form').classList.remove('visible');
+  document.getElementById('sheet-actions-wrap').style.display = 'block';
+  currentDecision = null;
+}
+
+function selectAction(decision) {
+  if (decision === 'no_track') { closeSheet(); resetCalc(); return; }
+
+  currentDecision = normalizeDecision(decision);
+  document.getElementById('sheet-actions-wrap').style.display = 'none';
+
+  // Render category pills
+  const categories = getUserCategories();
+  document.getElementById('sheet-categories').innerHTML =
+    categories.map(cat =>
+      `<button class="category-pill" type="button" role="option" onclick="selectCategory(this)">${escapeHtml(cat)}</button>`
+    ).join('');
+
+  document.getElementById('entry-name-input').value = '';
+  document.getElementById('sheet-form').classList.add('visible');
+  setTimeout(() => document.getElementById('entry-name-input').focus(), 30);
+}
+
+function selectCategory(btn) {
+  document.querySelectorAll('#sheet-categories .category-pill').forEach(p => p.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function saveEntry() {
+  const name     = document.getElementById('entry-name-input').value.trim() || 'Unnamed';
+  const selCat   = document.querySelector('#sheet-categories .category-pill.selected');
+  const category = selCat ? selCat.textContent : '❓ Other';
+
+  const settings = getUserSettings();
+  const rate     = calcEarningPerMinute(settings);
+  const entry    = {
+    id:        generateId(),
+    amount:    currentAmount,
+    minutes:   rate > 0 ? currentAmount / rate : 0,
+    decision:  normalizeDecision(currentDecision),
+    notes:     '',
+    name,
+    category,
+    timestamp: new Date().toISOString()
+  };
+
+  const data = getCurrentUserData();
+  data.entries = data.entries || [];
+  data.entries.unshift(entry);
+  saveCurrentUserData(data);
+
+  closeSheet();
+  showSuccess();
+  resetCalc();
+  renderHistory();
+  renderWatchlist();
+}
+
+function cancelEntry() { closeSheet(); }
+
+function resetCalc() {
+  calcInput = '0';
+  updateBillDisplay('0', calcEarningPerMinute(getUserSettings()));
+}
+
+function showSuccess() {
+  const overlay = document.getElementById('success-overlay');
+  overlay.classList.add('visible');
+  // Re-trigger SVG animation
+  const path = overlay.querySelector('.checkmark-path');
+  path.style.animation = 'none';
+  void path.offsetWidth; // Force reflow to reset SVG animation before replaying
+  path.style.animation = '';
+  setTimeout(() => overlay.classList.remove('visible'), 650);
+}
+
+/* Keyboard support for calculator */
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('tab-calculator').classList.contains('active')) return;
+  if (document.getElementById('result-sheet').classList.contains('open')) return;
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  if (e.key >= '0' && e.key <= '9') { e.preventDefault(); keyPress(e.key); }
+  else if (e.key === '.')            { e.preventDefault(); keyPress('.'); }
+  else if (e.key === 'Backspace')    { e.preventDefault(); keyPress('backspace'); }
+  else if (e.key === 'Enter')        { e.preventDefault(); handleEnter(); }
+});
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+function setHistoryPeriod(period) {
+  historyPeriod = period;
+  document.querySelectorAll('.seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.period === period)
+  );
+  renderHistory();
+}
+
+function getFilteredEntries(period) {
+  const now     = new Date();
+  const entries = getHistoryEntries();
+  return entries.filter(e => {
+    const d = new Date(e.timestamp);
+    if (period === 'daily')   return d.toDateString() === now.toDateString();
+    if (period === 'weekly') {
+      const ws = new Date(now); ws.setDate(now.getDate() - now.getDay()); ws.setHours(0,0,0,0);
+      return d >= ws;
+    }
+    if (period === 'monthly') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'yearly')  return d.getFullYear() === now.getFullYear();
+    return true;
+  });
+}
+
+function renderHistory() {
+  const body = document.getElementById('history-body');
+  const entries = getFilteredEntries(historyPeriod);
+
+  if (entries.length === 0) {
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-title">No history yet</div>
+        <div class="empty-state-text">Your bought and skipped items will show up here.</div>
+      </div>`;
+    return;
+  }
+
+  const bought = entries.filter(e => normalizeDecision(e.decision) === 'buy');
+  const skipped = entries.filter(e => normalizeDecision(e.decision) === 'skip');
+  const totalAmt = entries.reduce((s, e) => s + e.amount, 0);
+  const boughtAmt = bought.reduce((s, e) => s + e.amount, 0);
+  const skippedAmt = skipped.reduce((s, e) => s + e.amount, 0);
+  const boughtMin = bought.reduce((s, e) => s + e.minutes, 0);
+  const skippedMin = skipped.reduce((s, e) => s + e.minutes, 0);
+  const buyPct = entries.length ? Math.round(bought.length / entries.length * 100) : 0;
+  const skipPct = 100 - buyPct;
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total tracked</div>
+        <div class="stat-value">${entries.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total amount</div>
+        <div class="stat-value">${formatCurrency(totalAmt)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Bought</div>
+        <div class="stat-value" style="color:var(--color-success)">${formatMinutes(boughtMin)}</div>
+        <div class="stat-sub">${formatCurrency(boughtAmt)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Skipped</div>
+        <div class="stat-value" style="color:var(--color-error)">${formatMinutes(skippedMin)}</div>
+        <div class="stat-sub">${formatCurrency(skippedAmt)}</div>
+      </div>
+      <div class="ratio-card">
+        <div class="stat-label">Bought vs Skipped</div>
+        <div class="ratio-bar">
+          <div class="ratio-bar-buy" style="width:${buyPct}%"></div>
+          <div class="ratio-bar-give" style="width:${skipPct}%"></div>
+        </div>
+        <div class="ratio-labels">
+          <span class="ratio-buy-label">${buyPct}% bought</span>
+          <span class="ratio-give-label">${skipPct}% skipped</span>
+        </div>
+      </div>
+    </div>`;
+
+  const groups = {};
+  entries.forEach(e => {
+    const label = new Date(e.timestamp).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    (groups[label] = groups[label] || []).push(e);
+  });
+
+  for (const [dateLabel, group] of Object.entries(groups)) {
+    html += `<div class="date-group"><div class="date-group-label">${escapeHtml(dateLabel)}</div>`;
+    group.forEach(e => {
+      const em = (e.category || '❓').split(' ')[0];
+      const decision = normalizeDecision(e.decision);
+      html += `
+        <div class="entry-card interactive" role="button" tabindex="0" onclick="openEntryModal('${e.id}')" onkeydown="handleEntryCardKey(event, '${e.id}')">
+          <div class="entry-emoji">${escapeHtml(em)}</div>
+          <div class="entry-info">
+            <div class="entry-name">${escapeHtml(e.name)}</div>
+            <div class="entry-time">${relativeTime(e.timestamp)}</div>
+          </div>
+          <div class="entry-right">
+            <div class="entry-amount">${formatCurrency(e.amount)}</div>
+            <div class="entry-work">${formatMinutes(e.minutes)}</div>
+            <div class="entry-badge ${decision === 'buy' ? 'buy' : 'skip'}">
+              ${decision === 'buy' ? 'Bought' : 'Skipped'}
+            </div>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  body.innerHTML = html;
+}
+
+function renderWatchlist() {
+  const body = document.getElementById('watchlist-body');
+  const entries = getWatchlistEntries();
+
+  if (entries.length === 0) {
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">👀</div>
+        <div class="empty-state-title">Nothing on your watchlist</div>
+        <div class="empty-state-text">Send something here from the calculator when you want to think about it later.</div>
+      </div>`;
+    return;
+  }
+
+  let html = '<div class="date-group">';
+  entries.forEach(e => {
+    const em = (e.category || '❓').split(' ')[0];
+    html += `
+      <div class="entry-card watchlist-card interactive" role="button" tabindex="0" onclick="openEntryModal('${e.id}')" onkeydown="handleEntryCardKey(event, '${e.id}')">
+        <div class="entry-emoji">${escapeHtml(em)}</div>
+        <div class="entry-info">
+          <div class="entry-name">${escapeHtml(e.name)}</div>
+          <div class="entry-time">${relativeTime(e.timestamp)}</div>
+        </div>
+        <div class="entry-right">
+          <div class="entry-amount">${formatCurrency(e.amount)}</div>
+          <div class="entry-work">${formatMinutes(e.minutes)}</div>
+          <div class="entry-badge watchlist">Watchlist</div>
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function handleEntryCardKey(event, entryId) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    openEntryModal(entryId);
+  }
+}
+
+function relativeTime(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1)   return 'Just now';
+  if (mins < 60)  return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)   return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7)   return `${days}d ago`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function renderSettings() {
+  const s    = getUserSettings();
+  const cats = getUserCategories();
+  const rate = calcEarningPerMinute(s);
+  const body = document.getElementById('settings-body');
+
+  body.innerHTML = `
+    <!-- Profile -->
+    <div class="settings-section">
+      <div class="settings-section-label">Profile</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Username</span>
+          <span class="settings-row-value">${escapeHtml(currentUser)}</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Session</span>
+          <button class="btn-logout" type="button" onclick="handleLogout()">Log Out →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Income -->
+    <div class="settings-section">
+      <div class="settings-section-label">Income</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Income Type</span>
+          <select class="settings-select" id="st-income-type" onchange="updateSetting('incomeType', this.value)">
+            <option value="hourly"  ${s.incomeType === 'hourly'  ? 'selected' : ''}>Hourly</option>
+            <option value="monthly" ${s.incomeType === 'monthly' ? 'selected' : ''}>Monthly</option>
+            <option value="annual"  ${s.incomeType === 'annual'  ? 'selected' : ''}>Annual</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Income Amount</span>
+          <input class="settings-row-input" type="number" id="st-income-amount"
+            value="${s.incomeAmount}" min="0" step="0.01"
+            onchange="updateSetting('incomeAmount', parseFloat(this.value) || 0)">
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Hours / Week</span>
+          <input class="settings-row-input" type="number" id="st-hours"
+            value="${s.hoursPerWeek}" min="1" max="168"
+            onchange="updateSetting('hoursPerWeek', parseFloat(this.value) || 40)">
+        </div>
+        <div class="rate-display" id="st-rate">Current rate: $${rate.toFixed(4)}/min</div>
+      </div>
+    </div>
+
+    <!-- Real Wages -->
+    <div class="settings-section">
+      <div class="settings-section-label">Real Wages</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Real Wage Mode</div>
+            <div style="font-size:12px;color:var(--color-fg-2);margin-top:2px">Deduct fixed monthly expenses</div>
+          </div>
+          <button class="toggle ${s.realWageEnabled ? 'on' : ''}" type="button" id="st-real-wage-toggle"
+            onclick="toggleSettingsRealWage(this)"></button>
+        </div>
+        <div id="st-expenses-row" style="display:${s.realWageEnabled ? 'flex' : 'none'};
+          align-items:center;padding:14px 16px;border-top:1px solid var(--color-stroke-1);gap:12px;min-height:52px">
+          <span class="settings-row-label">Monthly Fixed Expenses</span>
+          <input class="settings-row-input" type="number" id="st-expenses"
+            value="${s.monthlyFixedExpenses}" min="0" step="0.01"
+            onchange="updateSetting('monthlyFixedExpenses', parseFloat(this.value) || 0)">
+        </div>
+        <div class="rate-display" id="st-adj-rate"
+          style="display:${s.realWageEnabled ? 'block' : 'none'}">
+          Adjusted rate: $${rate.toFixed(4)}/min
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="settings-section">
+      <div class="settings-section-label">Categories</div>
+      <div class="settings-group">
+        ${cats.map((cat, i) => `
+          <div class="category-row">
+            <span class="category-row-name">${escapeHtml(cat)}</span>
+            <div class="category-row-actions">
+              <button class="btn-cat-action" type="button" onclick="moveCategory(${i}, -1)" ${i === 0 ? 'disabled' : ''} aria-label="Move category up">↑</button>
+              <button class="btn-cat-action" type="button" onclick="moveCategory(${i}, 1)" ${i === cats.length - 1 ? 'disabled' : ''} aria-label="Move category down">↓</button>
+              <button class="btn-cat-action" type="button" onclick="showEditCategoryModal(${i})">Edit</button>
+              <button class="btn-delete-cat" type="button" onclick="deleteCategory(${i})" aria-label="Delete category">×</button>
+            </div>
+          </div>`).join('')}
+        <div class="settings-row" style="border-top:1px solid var(--color-stroke-1)">
+          <button class="btn-link" type="button" onclick="showAddCategoryModal()">+ Add Category</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data -->
+    <div class="settings-section">
+      <div class="settings-section-label">Data</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Export Data</span>
+          <button class="btn-link" type="button" onclick="exportData()">Download JSON →</button>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Clear History</span>
+          <button class="btn-danger-link" type="button" onclick="showClearConfirm()">Clear All →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="settings-section">
+      <div class="settings-section-label">About</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Version</span>
+          <span class="settings-row-value">1.1.0</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function updateSetting(field, value) {
+  const data = getCurrentUserData();
+  data.settings[field] = value;
+  saveCurrentUserData(data);
+  refreshRateDisplays();
+}
+
+function toggleSettingsRealWage(btn) {
+  btn.classList.toggle('on');
+  const on = btn.classList.contains('on');
+  updateSetting('realWageEnabled', on);
+  const expRow  = document.getElementById('st-expenses-row');
+  const adjRate = document.getElementById('st-adj-rate');
+  if (expRow)  expRow.style.display  = on ? 'flex'  : 'none';
+  if (adjRate) adjRate.style.display = on ? 'block' : 'none';
+}
+
+function refreshRateDisplays() {
+  const rate = calcEarningPerMinute(getUserSettings());
+  const mainRate = document.getElementById('st-rate');
+  const adjRate = document.getElementById('st-adj-rate');
+  if (mainRate) mainRate.textContent = `Current rate: $${rate.toFixed(4)}/min`;
+  if (adjRate) adjRate.textContent = `Adjusted rate: $${rate.toFixed(4)}/min`;
+  updateRateChip(rate);
+  updateBillDisplay(calcInput, rate);
+  renderHistory();
+  renderWatchlist();
+}
+
+function moveCategory(idx, direction) {
+  const data = getCurrentUserData();
+  const cats = [...(data.categories || [...DEFAULT_CATEGORIES])];
+  const next = idx + direction;
+  if (next < 0 || next >= cats.length) return;
+  [cats[idx], cats[next]] = [cats[next], cats[idx]];
+  data.categories = cats;
+  saveCurrentUserData(data);
+  renderSettings();
+}
+
+function deleteCategory(idx) {
+  const data = getCurrentUserData();
+  const cats = [...(data.categories || [...DEFAULT_CATEGORIES])];
+  cats.splice(idx, 1);
+  data.categories = cats;
+  saveCurrentUserData(data);
+  renderSettings();
+}
+
+function showAddCategoryModal() {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Add Category</div>
+    <div class="input-group">
+      <label class="input-label" for="new-cat-input">Category</label>
+      <input class="input-field" type="text" id="new-cat-input" placeholder="Coffee" maxlength="40">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-primary" type="button" onclick="addCategory()">Add</button>
+    </div>`;
+  openModal();
+  setTimeout(() => document.getElementById('new-cat-input').focus(), 120);
+}
+
+function showEditCategoryModal(idx) {
+  const cats = getUserCategories();
+  const current = cats[idx] || '';
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Edit Category</div>
+    <div class="input-group">
+      <label class="input-label" for="edit-cat-input">Category</label>
+      <input class="input-field" type="text" id="edit-cat-input" value="${escapeHtml(current)}" maxlength="40">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-primary" type="button" onclick="saveCategoryEdit(${idx})">Save</button>
+    </div>`;
+  openModal();
+  setTimeout(() => document.getElementById('edit-cat-input').focus(), 120);
+}
+
+function addCategory() {
+  const input = document.getElementById('new-cat-input');
+  const val = input.value.trim();
+  if (!val) { input.focus(); return; }
+  const data = getCurrentUserData();
+  data.categories = data.categories || [...DEFAULT_CATEGORIES];
+  data.categories.push(val);
+  saveCurrentUserData(data);
+  closeModal();
+  renderSettings();
+}
+
+function saveCategoryEdit(idx) {
+  const input = document.getElementById('edit-cat-input');
+  const val = input.value.trim();
+  if (!val) { input.focus(); return; }
+  const data = getCurrentUserData();
+  const cats = data.categories || [...DEFAULT_CATEGORIES];
+  const previous = cats[idx];
+  cats[idx] = val;
+  data.categories = cats;
+  data.entries = (data.entries || []).map(entry => entry.category === previous ? { ...entry, category: val } : entry);
+  saveCurrentUserData(data);
+  closeModal();
+  renderSettings();
+  renderHistory();
+  renderWatchlist();
+}
+
+function openEntryModal(entryId) {
+  const data = getCurrentUserData();
+  const entry = (data.entries || []).find(item => item.id === entryId);
+  if (!entry) return;
+
+  const categories = getUserCategories();
+  const decision = normalizeDecision(entry.decision);
+  const decisionOptions = [
+    ['buy', 'Buy'],
+    ['skip', 'Skip'],
+    ['watchlist', 'Watchlist']
+  ].map(([value, label]) => `<option value="${value}" ${decision === value ? 'selected' : ''}>${label}</option>`).join('');
+
+  const watchlistActions = decision === 'watchlist' ? `
+    <div class="detail-action-row">
+      <button class="detail-action-btn buy-btn" type="button" onclick="quickMoveEntry('${entryId}', 'buy')">Buy</button>
+      <button class="detail-action-btn skip-btn" type="button" onclick="quickMoveEntry('${entryId}', 'skip')">Skip</button>
+      <button class="detail-action-btn forget-btn" type="button" onclick="confirmDeleteEntry('${entryId}', 'forget')">Forget</button>
+    </div>` : '';
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">${decision === 'watchlist' ? 'Watchlist item' : 'Edit item'}</div>
+    ${watchlistActions}
+    <div class="detail-grid">
+      <div class="detail-meta">${formatMinutes(entry.minutes)} · ${new Date(entry.timestamp).toLocaleString()}</div>
+      <div class="input-group">
+        <label class="input-label" for="entry-edit-name">Name</label>
+        <input class="input-field" type="text" id="entry-edit-name" value="${escapeHtml(entry.name || '')}" maxlength="80">
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="entry-edit-amount">Amount</label>
+        <input class="input-field" type="number" id="entry-edit-amount" value="${Number(entry.amount || 0).toFixed(2)}" min="0" step="0.01">
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="entry-edit-category">Category</label>
+        <select class="modal-form-select" id="entry-edit-category">${categories.map(cat => `<option value="${escapeHtml(cat)}" ${cat === entry.category ? 'selected' : ''}>${escapeHtml(cat)}</option>`).join('')}</select>
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="entry-edit-decision">Status</label>
+        <select class="modal-form-select" id="entry-edit-decision">${decisionOptions}</select>
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="entry-edit-notes">Notes</label>
+        <textarea class="modal-textarea" id="entry-edit-notes" placeholder="Add a note">${escapeHtml(entry.notes || '')}</textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-danger" type="button" onclick="confirmDeleteEntry('${entryId}')">Delete</button>
+      <button class="btn-modal-primary" type="button" onclick="saveEntryChanges('${entryId}')">Save</button>
+    </div>`;
+  openModal();
+  setTimeout(() => document.getElementById('entry-edit-name').focus(), 120);
+}
+
+function saveEntryChanges(entryId) {
+  const data = getCurrentUserData();
+  const entries = data.entries || [];
+  const idx = entries.findIndex(item => item.id === entryId);
+  if (idx === -1) return;
+
+  const current = entries[idx];
+  const amount = parseFloat(document.getElementById('entry-edit-amount').value) || 0;
+  const inferredRate = getEntryRate(current);
+
+  entries[idx] = {
+    ...current,
+    name: document.getElementById('entry-edit-name').value.trim() || 'Unnamed',
+    amount,
+    minutes: inferredRate > 0 && amount > 0 ? amount / inferredRate : 0,
+    category: document.getElementById('entry-edit-category').value,
+    decision: normalizeDecision(document.getElementById('entry-edit-decision').value),
+    notes: document.getElementById('entry-edit-notes').value.trim()
+  };
+
+  data.entries = entries;
+  saveCurrentUserData(data);
+  closeModal();
+  renderHistory();
+  renderWatchlist();
+  showSuccess();
+}
+
+function quickMoveEntry(entryId, decision) {
+  const data = getCurrentUserData();
+  const entries = data.entries || [];
+  const idx = entries.findIndex(item => item.id === entryId);
+  if (idx === -1) return;
+
+  const current = entries[idx];
+  const amountInput = document.getElementById('entry-edit-amount');
+  const nameInput = document.getElementById('entry-edit-name');
+  const categoryInput = document.getElementById('entry-edit-category');
+  const notesInput = document.getElementById('entry-edit-notes');
+  const inferredRate = getEntryRate(current);
+  const amount = amountInput ? (parseFloat(amountInput.value) || 0) : current.amount;
+
+  entries[idx] = {
+    ...current,
+    name: nameInput ? (nameInput.value.trim() || 'Unnamed') : current.name,
+    amount,
+    minutes: inferredRate > 0 && amount > 0 ? amount / inferredRate : 0,
+    category: categoryInput ? categoryInput.value : current.category,
+    decision: normalizeDecision(decision),
+    notes: notesInput ? notesInput.value.trim() : (current.notes || '')
+  };
+
+  data.entries = entries;
+  saveCurrentUserData(data);
+  closeModal();
+  renderHistory();
+  renderWatchlist();
+  showSuccess();
+}
+
+function confirmDeleteEntry(entryId, mode = 'delete') {
+  const isForget = mode === 'forget';
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">${isForget ? 'Forget this item?' : 'Delete transaction?'}</div>
+    <div class="confirm-text">${isForget ? 'This will permanently remove this watchlist item.' : 'This will permanently delete this transaction and any notes.'} This cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-danger" type="button" onclick="deleteEntry('${entryId}')">${isForget ? 'Forget' : 'Delete'}</button>
+    </div>`;
+  openModal();
+}
+
+function deleteEntry(entryId) {
+  const data = getCurrentUserData();
+  data.entries = (data.entries || []).filter(entry => entry.id !== entryId);
+  saveCurrentUserData(data);
+  closeModal();
+  renderHistory();
+  renderWatchlist();
+}
+
+function forgetEntry(entryId) {
+  deleteEntry(entryId);
+}
+
+function showClearConfirm() {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Clear All History?</div>
+    <div class="confirm-text">This will permanently delete all your spending entries. This action cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-danger" type="button" onclick="clearHistory()">Clear All</button>
+    </div>`;
+  openModal();
+}
+
+function clearHistory() {
+  const data = getCurrentUserData();
+  data.entries = [];
+  saveCurrentUserData(data);
+  closeModal();
+  renderHistory();
+}
+
+function exportData() {
+  const data = getCurrentUserData();
+  const exportEntries = (data.entries || []).map(entry => {
+    const { notes, ...rest } = entry;
+    return { ...rest, decision: normalizeDecision(rest.decision) };
+  });
+  const json = JSON.stringify({
+    username: currentUser,
+    exportedAt: new Date().toISOString(),
+    settings: data.settings,
+    categories: data.categories,
+    entries: exportEntries
+  }, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `benji-${currentUser}-${new Date().toISOString().split('T')[0]}.json`
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+function openModal()  { document.getElementById('modal-overlay').classList.add('visible'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('visible'); }
+function onModalOverlayClick(e) { if (e.target === e.currentTarget) closeModal(); }
+
+/* Also allow Enter key inside modals */
+document.getElementById('modal-overlay').addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ============================================================
+   APP INITIALIZATION
+   ============================================================ */
+function init() {
+  const saved = sessionStorage.getItem(SESSION_KEY);
+  if (saved && getUsers()[saved]) {
+    currentUser = saved;
+    postLogin();
+    return;
+  }
+  showScreen('auth');
+}
+
+/* Register PWA service worker */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('sw.js').catch(() => {})
+  );
+}
+
+init();
+</script>
+</body>
+</html>
